@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "sourceMap": true
+  },
+  "include": [
+    "./typings/index.d.ts",
+    "./docs/assets/scripts/**.ts"
+  ]
+}

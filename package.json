@@ -1,0 +1,14 @@
+{
+  "name": "BubbleGun",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Poulad",
+  "scripts": {
+    "install": "./node_modules/.bin/typings install",
+    "postinstall": "./node_modules/.bin/tsc"
+  },
+  "devDependencies": {
+    "typescript": "^2.4.1",
+    "typings": "^2.1.1"
+  }
+}
