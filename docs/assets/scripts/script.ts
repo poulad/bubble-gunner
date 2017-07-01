@@ -5,6 +5,7 @@ namespace Script {
     import Ticker = createjs.Ticker;
     import Tween = createjs.Tween;
     import Ease = createjs.Ease;
+    import Touch = createjs.Touch;
 
     let canvas: HTMLCanvasElement;
     let stage: Stage;
@@ -65,6 +66,7 @@ namespace Script {
         resizeCanvas();
 
         stage = new Stage(canvas);
+        Touch.enable(stage);
         Ticker.framerate = 60;
         Ticker.addEventListener(`tick`, () => stage.update());
 
