@@ -6,10 +6,39 @@ var Script;
     var Tween = createjs.Tween;
     var Ease = createjs.Ease;
     var Touch = createjs.Touch;
+    var Text = createjs.Text;
+    var isMobile = Touch.isSupported() === true;
     var canvas;
     var stage;
     var bg;
     var circle;
+    var scoreText;
+    var score = 0;
+    var counter = 7;
+    var counterInterval;
+    var counterText;
+    var hexValues = "0123456789ABCDEF";
+    function generateColor() {
+        var color = "#";
+        for (var i = 0; i < 6; i++) {
+            var i_1 = (Math.random() * 832740) % 16;
+            color += hexValues.charAt(i_1);
+        }
+        return color;
+    }
+    function handleCounterInterval() {
+        if (counter < 2) {
+            clearInterval(counterInterval);
+            stage.removeChild(circle, counterText);
+            circle.removeEventListener("pressmove", beginMoveCircle);
+            counter = null;
+            counterInterval = null;
+        }
+        else {
+            counter--;
+            counterText.text = counter.toString();
+        }
+    }
     function beginMoveCircle(ev) {
         function setBgToDark() {
             bg.graphics
@@ -17,9 +46,22 @@ var Script;
                 .beginFill("#555")
                 .drawRect(0, 0, canvas.width, canvas.height);
         }
+        var distance = Math.sqrt(Math.pow(circle.x - ev.stageX, 2) +
+            Math.pow(circle.y - ev.stageY, 2));
+        distance = Math.floor(distance * Math.random() / 10);
+        score += distance;
+        scoreText.text = score.toString();
+        var bgColor = "#458";
+        var distanceThreshold = 12;
+        if (isMobile) {
+            distanceThreshold = 3;
+        }
+        if (distance > distanceThreshold) {
+            bgColor = generateColor();
+        }
         bg.graphics
             .clear()
-            .beginFill("#458")
+            .beginFill(bgColor)
             .drawRect(0, 0, canvas.width, canvas.height);
         Tween.get(circle)
             .to({
@@ -43,6 +85,14 @@ var Script;
         circle.y = canvas.height / 2;
         stage.addChild(circle);
         circle.addEventListener("pressmove", beginMoveCircle);
+        scoreText = new Text(score.toString(), "14pt sans", "yellow");
+        scoreText.x = 4;
+        scoreText.y = 7;
+        stage.addChild(scoreText);
+        counterText = new Text(counter.toString(), "14pt sans", "#fff");
+        counterText.x = canvas.width - counterText.getMeasuredWidth() - 10;
+        counterText.y = 7;
+        stage.addChild(counterText);
     }
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -57,6 +107,7 @@ var Script;
         Ticker.framerate = 60;
         Ticker.addEventListener("tick", function () { return stage.update(); });
         draw();
+        counterInterval = setInterval(handleCounterInterval, 1 * 1000);
     }
     Script.init = init;
 })(Script || (Script = {}));
