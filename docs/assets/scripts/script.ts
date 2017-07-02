@@ -34,6 +34,52 @@ namespace Script {
         return color;
     }
 
+    function showScores() {
+        if (!(this.readyState === 4 && this.status === 200)) {
+            return;
+        }
+
+        let highScoreTexts: Text[] = [];
+
+        let highScores = <IHighScore[]> JSON.parse(this.response);
+        for (let i = 0; i < highScores.length; i++) {
+            let score = highScores[i];
+            let text = new Text(`${score.score}    ${score.user.first_name}`, `12pt sans`, `yellow`);
+            text.x = (canvas.width / 2) - (text.getMeasuredWidth() / 2);
+            text.y = 5 + (6 * i);
+            highScoreTexts[i] = text;
+            stage.addChild(text);
+        }
+    }
+
+    function sendScore() {
+        let scoresUrl = getScoreUrl();
+        let playerid = getPlayerId();
+
+        let xhr = new XMLHttpRequest();
+        let data = <IScoreData> {
+            playerId: playerid,
+            score: score
+        };
+        xhr.open("POST", scoresUrl);
+        xhr.send(JSON.stringify(data));
+        xhr.addEventListener(`readystatechange`, () => {
+            if (xhr.readyState === 4) {
+                getScores();
+            }
+        });
+    }
+
+    function getScores() {
+        let scoresUrl = getScoreUrl();
+        let playerid = getPlayerId();
+
+        let xhr = new XMLHttpRequest();
+        xhr.addEventListener(`load`, showScores);
+        xhr.open("GET", scoresUrl + `?id=${encodeURIComponent(playerid)}`);
+        xhr.send();
+    }
+
     function handleCounterInterval() {
         if (counter < 2) {
             clearInterval(counterInterval);
@@ -41,6 +87,9 @@ namespace Script {
             circle.removeEventListener(`pressmove`, beginMoveCircle);
             counter = null;
             counterInterval = null;
+            if (botGameScoreUrlExists()) {
+                sendScore();
+            }
         }
         else {
             counter--;

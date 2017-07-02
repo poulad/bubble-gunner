@@ -26,6 +26,45 @@ var Script;
         }
         return color;
     }
+    function showScores() {
+        if (!(this.readyState === 4 && this.status === 200)) {
+            return;
+        }
+        var highScoreTexts = [];
+        var highScores = JSON.parse(this.response);
+        for (var i = 0; i < highScores.length; i++) {
+            var score_1 = highScores[i];
+            var text = new Text(score_1.score + "    " + score_1.user.first_name, "12pt sans", "yellow");
+            text.x = (canvas.width / 2) - (text.getMeasuredWidth() / 2);
+            text.y = 5 + (6 * i);
+            highScoreTexts[i] = text;
+            stage.addChild(text);
+        }
+    }
+    function sendScore() {
+        var scoresUrl = getScoreUrl();
+        var playerid = getPlayerId();
+        var xhr = new XMLHttpRequest();
+        var data = {
+            playerId: playerid,
+            score: score
+        };
+        xhr.open("POST", scoresUrl);
+        xhr.send(JSON.stringify(data));
+        xhr.addEventListener("readystatechange", function () {
+            if (xhr.readyState === 4) {
+                getScores();
+            }
+        });
+    }
+    function getScores() {
+        var scoresUrl = getScoreUrl();
+        var playerid = getPlayerId();
+        var xhr = new XMLHttpRequest();
+        xhr.addEventListener("load", showScores);
+        xhr.open("GET", scoresUrl + ("?id=" + encodeURIComponent(playerid)));
+        xhr.send();
+    }
     function handleCounterInterval() {
         if (counter < 2) {
             clearInterval(counterInterval);
@@ -33,6 +72,9 @@ var Script;
             circle.removeEventListener("pressmove", beginMoveCircle);
             counter = null;
             counterInterval = null;
+            if (botGameScoreUrlExists()) {
+                sendScore();
+            }
         }
         else {
             counter--;
