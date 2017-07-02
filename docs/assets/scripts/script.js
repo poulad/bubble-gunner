@@ -36,7 +36,7 @@ var Script;
             var score_1 = highScores[i];
             var text = new Text(score_1.score + "    " + score_1.user.first_name, "12pt sans", "yellow");
             text.x = (canvas.width / 2) - (text.getMeasuredWidth() / 2);
-            text.y = 5 + (6 * i);
+            text.y = 5 + (1.5 * text.getMeasuredLineHeight() * i);
             highScoreTexts[i] = text;
             stage.addChild(text);
         }
