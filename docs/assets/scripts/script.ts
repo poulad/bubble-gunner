@@ -70,15 +70,30 @@ class Bubble {
     }
 
     public move(): void {
+        this.updateEndPoint();
         Tween.get(this._shape)
             .to({
                 x: this.endPoint.x,
                 y: this.endPoint.y,
-            }, 7000);
+            }, 4000);
     }
 
     public getShape(): Shape {
         return this._shape;
+    }
+
+    private updateEndPoint(): void {
+        /*
+        line equation:
+        y = mx + b
+        m = (y2 - y1) / (x2 - x1)
+        */
+
+        let m = (this.endPoint.y - this.startPoint.y) / (this.endPoint.x - this.startPoint.x);
+        let b = this.startPoint.y - m * this.startPoint.x;
+
+        this.endPoint.y = 0;
+        this.endPoint.x = -(b / m);
     }
 }
 

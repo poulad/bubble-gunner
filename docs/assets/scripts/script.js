@@ -54,14 +54,26 @@ var Bubble = (function () {
         this.endPoint = targetPoint;
     }
     Bubble.prototype.move = function () {
+        this.updateEndPoint();
         Tween.get(this._shape)
             .to({
             x: this.endPoint.x,
             y: this.endPoint.y,
-        }, 7000);
+        }, 4000);
     };
     Bubble.prototype.getShape = function () {
         return this._shape;
+    };
+    Bubble.prototype.updateEndPoint = function () {
+        /*
+        line equation:
+        y = mx + b
+        m = (y2 - y1) / (x2 - x1)
+        */
+        var m = (this.endPoint.y - this.startPoint.y) / (this.endPoint.x - this.startPoint.x);
+        var b = this.startPoint.y - m * this.startPoint.x;
+        this.endPoint.y = 0;
+        this.endPoint.x = -(b / m);
     };
     return Bubble;
 }());
