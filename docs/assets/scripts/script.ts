@@ -48,10 +48,13 @@ class Animal {
 }
 
 class Bubble {
-    private _shape: Shape;
     public startPoint: Point;
     public endPoint: Point;
     public speed: number;
+
+    private _shape: Shape;
+    private _pulseEventListener: EventListener = this.pulse.bind(this);
+    private _pulseCount = 0;
 
     constructor(targetPoint: Point) {
         const r = 15;
@@ -61,6 +64,7 @@ class Bubble {
             .beginStroke('rgba(255, 255, 255, .8)')
             .drawCircle(0, 0, r);
         this._shape.regY = r;
+        this._shape.addEventListener(`tick`, this._pulseEventListener);
 
         let initPoint = new Point(canvas.width / 2, canvas.height - 20);
         this._shape.x = initPoint.x;
@@ -82,12 +86,21 @@ class Bubble {
         return this._shape;
     }
 
+    private pulse(): void {
+        let alpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
+        Tween.get(this._shape)
+            .to({
+                alpha: alpha
+            }, 100);
+        this._pulseCount++;
+    }
+
     private updateEndPoint(): void {
         /*
-        line equation:
-        y = mx + b
-        m = (y2 - y1) / (x2 - x1)
-        */
+         line equation:
+         y = mx + b
+         m = (y2 - y1) / (x2 - x1)
+         */
 
         let m = (this.endPoint.y - this.startPoint.y) / (this.endPoint.x - this.startPoint.x);
         let b = this.startPoint.y - m * this.startPoint.x;
@@ -130,8 +143,8 @@ class GameManager {
 let canvas: HTMLCanvasElement;
 let stage: Stage;
 
-function handleClick(evt: MouseEvent): void {
-    let bubble = new Bubble(new Point(evt.x, evt.y));
+function handleClick(evt: createjs.MouseEvent): void {
+    let bubble = new Bubble(new Point(evt.stageX, evt.stageY));
     stage.addChild(bubble.getShape());
     bubble.move();
 }
@@ -153,7 +166,7 @@ function init() {
     createjs.Touch.enable(stage);
     manager.start();
 
-    canvas.addEventListener(`click`, handleClick, false);
+    stage.addEventListener(`stagemouseup`, handleClick, false);
 }
 
 window.addEventListener(`load`, init);

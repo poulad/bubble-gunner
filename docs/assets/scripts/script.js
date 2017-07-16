@@ -40,6 +40,8 @@ var Animal = (function () {
 }());
 var Bubble = (function () {
     function Bubble(targetPoint) {
+        this._pulseEventListener = this.pulse.bind(this);
+        this._pulseCount = 0;
         var r = 15;
         this._shape = new Shape();
         this._shape.graphics
@@ -47,6 +49,7 @@ var Bubble = (function () {
             .beginStroke('rgba(255, 255, 255, .8)')
             .drawCircle(0, 0, r);
         this._shape.regY = r;
+        this._shape.addEventListener("tick", this._pulseEventListener);
         var initPoint = new Point(canvas.width / 2, canvas.height - 20);
         this._shape.x = initPoint.x;
         this._shape.y = initPoint.y;
@@ -64,12 +67,20 @@ var Bubble = (function () {
     Bubble.prototype.getShape = function () {
         return this._shape;
     };
+    Bubble.prototype.pulse = function () {
+        var alpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
+        Tween.get(this._shape)
+            .to({
+            alpha: alpha
+        }, 100);
+        this._pulseCount++;
+    };
     Bubble.prototype.updateEndPoint = function () {
         /*
-        line equation:
-        y = mx + b
-        m = (y2 - y1) / (x2 - x1)
-        */
+         line equation:
+         y = mx + b
+         m = (y2 - y1) / (x2 - x1)
+         */
         var m = (this.endPoint.y - this.startPoint.y) / (this.endPoint.x - this.startPoint.x);
         var b = this.startPoint.y - m * this.startPoint.x;
         this.endPoint.y = 0;
@@ -106,7 +117,7 @@ var GameManager = (function () {
 var canvas;
 var stage;
 function handleClick(evt) {
-    var bubble = new Bubble(new Point(evt.x, evt.y));
+    var bubble = new Bubble(new Point(evt.stageX, evt.stageY));
     stage.addChild(bubble.getShape());
     bubble.move();
 }
@@ -123,7 +134,7 @@ function init() {
     Ticker.addEventListener("tick", stage);
     createjs.Touch.enable(stage);
     manager.start();
-    canvas.addEventListener("click", handleClick, false);
+    stage.addEventListener("stagemouseup", handleClick, false);
 }
 window.addEventListener("load", init);
 //# sourceMappingURL=script.js.map
