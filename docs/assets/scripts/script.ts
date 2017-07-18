@@ -64,17 +64,19 @@ class Bubble extends Shape {
     public startPoint: Point;
     public endPoint: Point;
     public speed: number;
+    public containsAnimal: boolean = false;
 
+    private _animal: Animal;
     private _pulseEventListener: EventListener = this.pulse.bind(this);
     private _pulseCount = 0;
+    private static r = 15;
 
     constructor(targetPoint: Point) {
         super();
-        const r = 15;
         this.graphics
             .beginFill('rgba(255, 255, 255, .1)')
             .beginStroke('rgba(255, 255, 255, .8)')
-            .drawCircle(0, 0, r);
+            .drawCircle(0, 0, Bubble.r);
         this.addEventListener(`tick`, this._pulseEventListener);
 
         let initPoint = new Point(canvas.width / 2, canvas.height - 20);
@@ -93,6 +95,15 @@ class Bubble extends Shape {
                 y: this.endPoint.y,
             }, 4000);
         return tween;
+    }
+
+    public setAnimal(animal: Animal): void {
+        this._animal = animal;
+        this.containsAnimal = this._animal != undefined;
+    }
+
+    public getAnimal(): Animal {
+        return this._animal;
     }
 
     private pulse(): void {
@@ -189,9 +200,10 @@ class GameManager {
                         Math.pow(b.y - a.y, 2) + Math.pow(b.x - a.x, 2)
                     );
 
-                    if (distance <= 30) {
-                        this._stage.removeChild(a, b);
-                        b = a = null;
+                    if (distance <= 30 && !b.containsAnimal) {
+                        this.wrapAnimalInBubble(b, a);
+                        // this._stage.removeChild(a, b);
+                        // b = a = null;
                     }
                 }
                 catch (exc) {
@@ -201,6 +213,45 @@ class GameManager {
         }
         this._isReadyToHandleTick = true;
         return;
+    }
+
+    private wrapAnimalInBubble(bubble: Bubble, animal: Animal): void {
+        bubble.setAnimal(animal);
+        bubble.graphics
+            .clear()
+            .beginFill('rgba(255, 255, 255, .1)')
+            .beginStroke('rgba(255, 255, 255, .8)')
+            .drawCircle(0, 0, 15 + 5);
+        bubble.x = animal.x;
+        bubble.y = animal.y;
+
+        Tween.removeTweens(bubble);
+        Tween.removeTweens(animal);
+        const time = 3500;
+        const y = -25;
+
+        Tween.get(animal)
+            .to({
+                y: y
+            }, time);
+        Tween.get(bubble)
+            .to({
+                y: y
+            }, time)
+            .call(() => {
+                this._stage.removeChild(bubble, animal);
+
+                this._isReadyToHandleTick = false;
+                let i: number;
+
+                i = this._animals.indexOf(animal);
+                if (i > -1) this._animals[i] = null;
+
+                i = this._bubbles.indexOf(bubble);
+                if (i > -1) this._bubbles[i] = null;
+
+                this._isReadyToHandleTick = true;
+            });
     }
 
     private getRandomX(): number {
