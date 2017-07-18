@@ -1,8 +1,29 @@
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var Shape = createjs.Shape;
 var DisplayObject = createjs.DisplayObject;
 var Stage = createjs.Stage;
 var Ticker = createjs.Ticker;
 var Tween = createjs.Tween;
+var canvas;
+function addToArray(array, item) {
+    var i = 0;
+    for (; i < array.length; i++) {
+        if (array[i] === null) {
+            break;
+        }
+    }
+    array[i] = item;
+    return i;
+}
 var Point = (function () {
     function Point(x, y) {
         if (x === void 0) { x = 0; }
@@ -12,64 +33,67 @@ var Point = (function () {
     }
     return Point;
 }());
-var Animal = (function () {
+var Animal = (function (_super) {
+    __extends(Animal, _super);
     function Animal(point) {
+        var _this = _super.call(this) || this;
         var r = 15;
-        this._shape = new Shape();
-        this._shape.graphics
+        _this.graphics
             .beginFill('lime')
             .drawCircle(0, 0, r);
-        console.info(this._shape.regY);
-        this._shape.x = point.x;
-        this._shape.y = point.y;
-        this.startPoint = point;
-        this._shape.regY = r;
+        _this.x = point.x;
+        _this.y = point.y;
+        _this.startPoint = point;
+        return _this;
     }
     Animal.prototype.moveTo = function (point) {
+        var _this = this;
         this.endPoint = point;
-        Tween.get(this._shape)
+        var t = Tween.get(this)
             .to({
             x: point.x,
             y: point.y,
-        }, 7000);
-    };
-    Animal.prototype.getShape = function () {
-        return this._shape;
+        }, 7000)
+            .call(function () {
+            Tween.get(_this)
+                .to({ alpha: 0 }, 300);
+        });
+        return t;
     };
     return Animal;
-}());
-var Bubble = (function () {
+}(Shape));
+var Bubble = (function (_super) {
+    __extends(Bubble, _super);
     function Bubble(targetPoint) {
-        this._pulseEventListener = this.pulse.bind(this);
-        this._pulseCount = 0;
+        var _this = _super.call(this) || this;
+        _this._pulseEventListener = _this.pulse.bind(_this);
+        _this._pulseCount = 0;
         var r = 15;
-        this._shape = new Shape();
-        this._shape.graphics
+        _this.graphics
             .beginFill('rgba(255, 255, 255, .1)')
             .beginStroke('rgba(255, 255, 255, .8)')
             .drawCircle(0, 0, r);
-        this._shape.regY = r;
-        this._shape.addEventListener("tick", this._pulseEventListener);
+        _this.addEventListener("tick", _this._pulseEventListener);
         var initPoint = new Point(canvas.width / 2, canvas.height - 20);
-        this._shape.x = initPoint.x;
-        this._shape.y = initPoint.y;
-        this.startPoint = initPoint;
-        this.endPoint = targetPoint;
+        _this.x = initPoint.x;
+        _this.y = initPoint.y;
+        _this.startPoint = initPoint;
+        _this.endPoint = targetPoint;
+        return _this;
     }
     Bubble.prototype.move = function () {
         this.updateEndPoint();
-        Tween.get(this._shape)
+        var tween;
+        tween = Tween.get(this)
             .to({
             x: this.endPoint.x,
             y: this.endPoint.y,
         }, 4000);
-    };
-    Bubble.prototype.getShape = function () {
-        return this._shape;
+        return tween;
     };
     Bubble.prototype.pulse = function () {
         var alpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
-        Tween.get(this._shape)
+        Tween.get(this)
             .to({
             alpha: alpha
         }, 100);
@@ -87,20 +111,75 @@ var Bubble = (function () {
         this.endPoint.x = -(b / m);
     };
     return Bubble;
-}());
+}(Shape));
 var GameManager = (function () {
     function GameManager(_stage) {
         this._stage = _stage;
         this._animals = [];
+        this._bubbles = [];
+        this._stageTickEventListener = this.tick.bind(this);
+        this._stageClickEventListener = this.handleClick.bind(this);
+        this._isReadyToHandleTick = true;
     }
     GameManager.prototype.start = function () {
-        var _this = this;
-        var intervalAnimal = setInterval(function () {
-            var a = new Animal(new Point(_this.getRandomX(), 0));
-            var s = a.getShape();
-            _this._stage.addChild(s);
-            a.moveTo(new Point(_this.getRandomX(), canvas.width));
-        }, 3000);
+        var intervalAnimal = setInterval(this.handleInterval.bind(this), 3000);
+        this._stage.addEventListener("stagemouseup", this._stageClickEventListener, false);
+        this._stage.addEventListener("tick", this._stageTickEventListener);
+    };
+    GameManager.prototype.handleInterval = function () {
+        var animal = new Animal(new Point(this.getRandomX(), 0));
+        var index = addToArray(this._animals, animal);
+        this._stage.addChild(animal);
+        console.debug(this._animals);
+        animal.moveTo(new Point(this.getRandomX(), canvas.width))
+            .call(this.removeShape.bind(this, animal, index));
+    };
+    GameManager.prototype.handleClick = function (evt) {
+        var bubble = new Bubble(new Point(evt.stageX, evt.stageY));
+        var index = addToArray(this._bubbles, bubble);
+        this._stage.addChild(bubble);
+        console.debug(this._bubbles);
+        bubble.move()
+            .call(this.removeShape.bind(this, bubble, index));
+    };
+    GameManager.prototype.removeShape = function (shape, index) {
+        if (index === void 0) { index = undefined; }
+        this._stage.removeChild(shape);
+        if (index === undefined)
+            return;
+        if (shape instanceof Bubble) {
+            this._bubbles[index] = null;
+        }
+        else if (shape instanceof Animal) {
+            this._animals[index] = null;
+        }
+    };
+    GameManager.prototype.tick = function () {
+        if (!this._isReadyToHandleTick)
+            return;
+        this._isReadyToHandleTick = false;
+        for (var i = 0; i < this._bubbles.length; i++) {
+            if (this._bubbles[i] == undefined)
+                continue;
+            var b = this._bubbles[i];
+            for (var j = 0; j < this._animals.length; j++) {
+                if (this._animals[j] == undefined)
+                    continue;
+                var a = this._animals[j];
+                try {
+                    var distance = Math.sqrt(Math.pow(b.y - a.y, 2) + Math.pow(b.x - a.x, 2));
+                    if (distance <= 30) {
+                        this._stage.removeChild(a, b);
+                        b = a = null;
+                    }
+                }
+                catch (exc) {
+                    console.info(exc.message);
+                }
+            }
+        }
+        this._isReadyToHandleTick = true;
+        return;
     };
     GameManager.prototype.getRandomX = function () {
         var x;
@@ -114,13 +193,6 @@ var GameManager = (function () {
     };
     return GameManager;
 }());
-var canvas;
-var stage;
-function handleClick(evt) {
-    var bubble = new Bubble(new Point(evt.stageX, evt.stageY));
-    stage.addChild(bubble.getShape());
-    bubble.move();
-}
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -129,12 +201,11 @@ function init() {
     canvas = document.getElementById("canvas");
     window.addEventListener("resize", resizeCanvas, false);
     resizeCanvas();
-    stage = new Stage(canvas);
+    var stage = new Stage(canvas);
     var manager = new GameManager(stage);
     Ticker.addEventListener("tick", stage);
     createjs.Touch.enable(stage);
     manager.start();
-    stage.addEventListener("stagemouseup", handleClick, false);
 }
 window.addEventListener("load", init);
 //# sourceMappingURL=script.js.map
