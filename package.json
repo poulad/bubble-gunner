@@ -11,7 +11,7 @@
   "devDependencies": {
     "express": "^4.15.3",
     "serve-index": "^1.9.0",
-    "typescript": "^2.4.1",
+    "typescript": "^2.4.2",
     "typings": "^2.1.1"
   }
 }

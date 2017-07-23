@@ -1,10 +1,30 @@
 import Shape = createjs.Shape;
-import DisplayObject = createjs.DisplayObject;
 import Stage = createjs.Stage;
 import Ticker = createjs.Ticker;
 import Tween = createjs.Tween;
+import DisplayObject = createjs.DisplayObject;
 
 let canvas: HTMLCanvasElement;
+
+namespace BubbleGunner.Funcs {
+    export function isOfType<T>(type: T) {
+        return (o: any) => o instanceof (<any>type);
+    }
+
+    export function toType<T>() {
+        return (o: any) => o as T;
+    }
+
+    export function isCollidingWith(o: DisplayObject) {
+        return (other: DisplayObject) => Math.sqrt(
+            Math.pow(o.y - other.y, 2) + Math.pow(o.x - other.x, 2)
+        ) < 30;
+    }
+
+    export function hasCollisions(tuple: [Bubble, Animal[]]): boolean {
+        return tuple[1].length > 0;
+    }
+}
 
 function addToArray(array: Array<any>, item: any): number {
     let i = 0;
@@ -56,6 +76,35 @@ class Animal extends Shape {
                     .to({alpha: 0}, 300);
             });
 
+        return t;
+    }
+}
+
+class Lava extends Shape {
+    public startPoint: Point;
+    public endPoint: Point;
+    public speed: number;
+    private static width = 12;
+    private static height = 15;
+
+    constructor(point: Point) {
+        super();
+        this.graphics
+            .beginFill('red')
+            .drawRect(0, 0, Lava.width, Lava.height);
+
+        this.x = point.x;
+        this.y = point.y;
+        this.startPoint = point;
+    }
+
+    public moveTo(point: Point): Tween {
+        this.endPoint = point;
+        let t = Tween.get(this)
+            .to({
+                x: this.endPoint.x,
+                y: this.endPoint.y,
+            }, 5500);
         return t;
     }
 }
@@ -133,6 +182,7 @@ class Bubble extends Shape {
 class GameManager {
     private _animals: Animal[] = [];
     private _bubbles: Bubble[] = [];
+    private _lavas: Lava[] = [];
 
     private _stageTickEventListener: EventListener = this.tick.bind(this);
     private _stageClickEventListener: EventListener = this.handleClick.bind(this);
@@ -145,6 +195,7 @@ class GameManager {
 
     public start() {
         let intervalAnimal = setInterval(this.handleInterval.bind(this), 3000);
+        let intervalLavaRain = setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
         this._stage.addEventListener(`stagemouseup`, this._stageClickEventListener, false);
         this._stage.addEventListener(`tick`, this._stageTickEventListener);
@@ -158,6 +209,16 @@ class GameManager {
 
         animal.moveTo(new Point(this.getRandomX(), canvas.width))
             .call(this.removeShape.bind(this, animal, index));
+    }
+
+    private handleLavaRainInterval() {
+        let lava = new Lava(new Point(this.getRandomX(), 0));
+        let index = addToArray(this._lavas, lava);
+        this._stage.addChild(lava);
+        console.debug(this._lavas);
+
+        lava.moveTo(new Point(this.getRandomX(), canvas.width))
+            .call(this.removeShape.bind(this, lava, index));
     }
 
     private handleClick(evt: createjs.MouseEvent): void {
@@ -179,40 +240,36 @@ class GameManager {
             this._bubbles[index] = null;
         } else if (shape instanceof Animal) {
             this._animals[index] = null;
+        } else if (shape instanceof Lava) {
+            this._lavas[index] = null;
         }
     }
 
-    private tick() {
+    private tick(): void {
         if (!this._isReadyToHandleTick)
             return;
 
         this._isReadyToHandleTick = false;
-        for (let i = 0; i < this._bubbles.length; i++) {
-            if (this._bubbles[i] == undefined) continue;
 
-            let b = this._bubbles[i];
-            for (let j = 0; j < this._animals.length; j++) {
-                if (this._animals[j] == undefined) continue;
+        let bubbles: Bubble[] = this._stage.children
+            .filter(BubbleGunner.Funcs.isOfType(Bubble))
+            .map(BubbleGunner.Funcs.toType<Bubble>());
 
-                let a = this._animals[j];
-                try {
-                    let distance = Math.sqrt(
-                        Math.pow(b.y - a.y, 2) + Math.pow(b.x - a.x, 2)
-                    );
+        let animals: Animal[] = this._stage.children
+            .filter(BubbleGunner.Funcs.isOfType(Animal))
+            .map(BubbleGunner.Funcs.toType<Animal>());
 
-                    if (distance <= 30 && !b.containsAnimal) {
-                        this.wrapAnimalInBubble(b, a);
-                        // this._stage.removeChild(a, b);
-                        // b = a = null;
-                    }
-                }
-                catch (exc) {
-                    console.info(exc.message);
-                }
-            }
-        }
+        let collidingBubbles: [Bubble, Animal][] = bubbles
+            .map(b => [b, animals.filter(BubbleGunner.Funcs.isCollidingWith(b))])
+            .filter(BubbleGunner.Funcs.hasCollisions)
+            .map(tuple => <[Bubble, Animal]>[tuple[0], tuple[1][0]])
+        ;
+
+        collidingBubbles.forEach(tuple => {
+            this.wrapAnimalInBubble(tuple[0], tuple[1]);
+        });
+
         this._isReadyToHandleTick = true;
-        return;
     }
 
     private wrapAnimalInBubble(bubble: Bubble, animal: Animal): void {
