@@ -13,5 +13,8 @@
     "serve-index": "^1.9.0",
     "typescript": "^2.4.2",
     "typings": "^2.1.1"
+  },
+  "dependencies": {
+    "ramda": "^0.21.0"
   }
 }

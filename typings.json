@@ -1,7 +1,8 @@
 {
-  "globalDevDependencies": {
+  "globalDependencies": {
     "createjs-lib": "registry:dt/createjs-lib#0.0.0+20160510002910",
     "easeljs": "registry:dt/easeljs#0.8.0+20170215062159",
+    "ramda": "registry:global/ramda#0.21.0+20160531162943",
     "tweenjs": "registry:dt/tweenjs#0.6.0+20160510010627"
   }
 }

@@ -26,17 +26,6 @@ namespace BubbleGunner.Funcs {
     }
 }
 
-function addToArray(array: Array<any>, item: any): number {
-    let i = 0;
-    for (; i < array.length; i++) {
-        if (array[i] === null) {
-            break;
-        }
-    }
-    array[i] = item;
-    return i;
-}
-
 class Point {
     public x: number;
     public y: number;
@@ -48,6 +37,8 @@ class Point {
 }
 
 class Animal extends Shape {
+    public static EventFell: string = `fell`;
+
     public startPoint: Point;
     public endPoint: Point;
     public speed: number;
@@ -66,21 +57,30 @@ class Animal extends Shape {
 
     public moveTo(point: Point): Tween {
         this.endPoint = point;
-        let t = Tween.get(this)
+        return Tween.get(this)
             .to({
                 x: point.x,
                 y: point.y,
             }, 7000)
-            .call(() => {
-                Tween.get(this)
-                    .to({alpha: 0}, 300);
-            });
+            .call(this.fallCallback.bind(this));
+    }
 
-        return t;
+    public continueFall(): Tween {
+        Tween.removeTweens(this);
+        let newEndPoint = new Point(this.endPoint.x, canvas.height);
+        return this.moveTo(newEndPoint);
+    }
+
+    private fallCallback(): Tween {
+        return Tween.get(this)
+            .to({alpha: .3}, 300)
+            .call(this.dispatchEvent.bind(this, Animal.EventFell));
     }
 }
 
 class Lava extends Shape {
+    public static EventFell: string = `fell`;
+
     public startPoint: Point;
     public endPoint: Point;
     public speed: number;
@@ -100,23 +100,26 @@ class Lava extends Shape {
 
     public moveTo(point: Point): Tween {
         this.endPoint = point;
-        let t = Tween.get(this)
+        return Tween.get(this)
             .to({
                 x: this.endPoint.x,
                 y: this.endPoint.y,
-            }, 5500);
-        return t;
+            }, 5500)
+            .call(() => this.dispatchEvent(new Event(Lava.EventFell)));
     }
 }
 
 class Bubble extends Shape {
+    public static EventPopped: string = `popped`;
+    public static EventAscended: string = `ascended`;
+    public static EventRescuedAnimal: string = `rescued`;
+
     public startPoint: Point;
     public endPoint: Point;
     public speed: number;
     public containsAnimal: boolean = false;
 
     private _animal: Animal;
-    private _pulseEventListener: EventListener = this.pulse.bind(this);
     private _pulseCount = 0;
     private static r = 15;
 
@@ -126,7 +129,7 @@ class Bubble extends Shape {
             .beginFill('rgba(255, 255, 255, .1)')
             .beginStroke('rgba(255, 255, 255, .8)')
             .drawCircle(0, 0, Bubble.r);
-        this.addEventListener(`tick`, this._pulseEventListener);
+        this.on(`tick`, this.pulse, this);
 
         let initPoint = new Point(canvas.width / 2, canvas.height - 20);
         this.x = initPoint.x;
@@ -137,18 +140,38 @@ class Bubble extends Shape {
 
     public move(): Tween {
         this.updateEndPoint();
-        let tween: Tween;
-        tween = Tween.get(this)
+        return Tween.get(this)
             .to({
                 x: this.endPoint.x,
                 y: this.endPoint.y,
-            }, 4000);
-        return tween;
+            }, 4000)
+            .call(this.dispatchEvent.bind(this, new Event(Bubble.EventAscended)));
     }
 
-    public setAnimal(animal: Animal): void {
+    public takeAnimal(animal: Animal): Tween {
         this._animal = animal;
-        this.containsAnimal = this._animal != undefined;
+        this.containsAnimal = true;
+
+        this.graphics
+            .clear()
+            .beginFill('rgba(255, 255, 255, .1)')
+            .beginStroke('rgba(255, 255, 255, .8)')
+            .drawCircle(0, 0, 15 + 5);
+        this.x = this._animal.x;
+        this.y = this._animal.y;
+
+        Tween.removeTweens(this._animal);
+        Tween.removeTweens(this);
+
+        const targetY = -7;
+        const duration = 3500;
+
+        let tween = Tween.get(this)
+            .to({y: targetY}, duration)
+            .call(this.dispatchEvent.bind(this, new Event(Bubble.EventRescuedAnimal)));
+        tween.on(`change`, () => this._animal.y = this.y, this);
+
+        return tween;
     }
 
     public getAnimal(): Animal {
@@ -177,138 +200,118 @@ class Bubble extends Shape {
         this.endPoint.y = 0;
         this.endPoint.x = -(b / m);
     }
+
+    public pop(): Tween {
+        Tween.removeTweens(this);
+
+        if (this.containsAnimal) {
+            this._animal.continueFall();
+        }
+
+        return Tween.get(this)
+            .to({
+                alpha: 0
+            }).call(this.dispatchEvent.bind(this, new Event(Bubble.EventPopped)));
+    }
 }
 
 class GameManager {
     private _animals: Animal[] = [];
     private _bubbles: Bubble[] = [];
     private _lavas: Lava[] = [];
-
-    private _stageTickEventListener: EventListener = this.tick.bind(this);
-    private _stageClickEventListener: EventListener = this.handleClick.bind(this);
-
-    private _isReadyToHandleTick: boolean = true;
+    private _isShapesLockFree: boolean = true;
 
     constructor(private _stage: Stage) {
 
     }
 
     public start() {
-        let intervalAnimal = setInterval(this.handleInterval.bind(this), 3000);
-        let intervalLavaRain = setInterval(this.handleLavaRainInterval.bind(this), 4000);
+        setInterval(this.handleAnimalRainInterval.bind(this), 3000);
+        setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
-        this._stage.addEventListener(`stagemouseup`, this._stageClickEventListener, false);
-        this._stage.addEventListener(`tick`, this._stageTickEventListener);
+        this._stage.on(`stagemouseup`, this.handleClick, this);
+        this._stage.on(`tick`, this.tick, this);
     }
 
-    private handleInterval() {
+    private handleAnimalRainInterval() {
         let animal = new Animal(new Point(this.getRandomX(), 0));
-        let index = addToArray(this._animals, animal);
+        this.lockShapes(() => {
+            this._animals.push(animal);
+        });
         this._stage.addChild(animal);
         console.debug(this._animals);
 
-        animal.moveTo(new Point(this.getRandomX(), canvas.width))
-            .call(this.removeShape.bind(this, animal, index));
+        animal.on(Animal.EventFell, () => this.removeShape(animal), this);
+        animal.moveTo(new Point(this.getRandomX(), canvas.width));
     }
 
     private handleLavaRainInterval() {
         let lava = new Lava(new Point(this.getRandomX(), 0));
-        let index = addToArray(this._lavas, lava);
+        this.lockShapes(() => this._lavas.push(lava));
         this._stage.addChild(lava);
         console.debug(this._lavas);
 
-        lava.moveTo(new Point(this.getRandomX(), canvas.width))
-            .call(this.removeShape.bind(this, lava, index));
+        lava.on(Lava.EventFell, () => this.removeShape(lava), this);
+        lava.moveTo(new Point(this.getRandomX(), canvas.width));
     }
 
     private handleClick(evt: createjs.MouseEvent): void {
         let bubble = new Bubble(new Point(evt.stageX, evt.stageY));
-        let index = addToArray(this._bubbles, bubble);
+        this.lockShapes(() => {
+            this._bubbles.push(bubble);
+        });
         this._stage.addChild(bubble);
         console.debug(this._bubbles);
 
-        bubble.move()
-            .call(this.removeShape.bind(this, bubble, index));
+        bubble.on(Bubble.EventPopped, () => this.removeShape(bubble), this);
+        bubble.on(Bubble.EventAscended, () => this.removeShape(bubble), this);
+        bubble.on(Bubble.EventRescuedAnimal, () => this.removeShape(bubble.getAnimal(), bubble), this);
+        bubble.move();
     }
 
-    private removeShape(shape: Shape, index: number = undefined): void {
-        this._stage.removeChild(shape);
-        if (index === undefined)
-            return;
+    private removeShape(...shapes: Shape[]): void {
+        this.lockShapes(() => {
+            for (let shape of shapes) {
+                this._stage.removeChild(shape);
 
-        if (shape instanceof Bubble) {
-            this._bubbles[index] = null;
-        } else if (shape instanceof Animal) {
-            this._animals[index] = null;
-        } else if (shape instanceof Lava) {
-            this._lavas[index] = null;
-        }
+                if (shape instanceof Bubble) {
+                    this._bubbles = this._bubbles
+                        .filter(b => b !== shape && b != undefined);
+
+                    console.debug(this._bubbles);
+                } else if (shape instanceof Animal) {
+                    this._animals = this._animals
+                        .filter(a => a !== shape && a != undefined);
+
+                    console.debug(this._animals);
+                } else if (shape instanceof Lava) {
+                    this._lavas = this._lavas
+                        .filter(l => l !== shape && l != undefined);
+
+                    console.debug(this._lavas);
+                } else {
+                    console.warn(`Unkown type to remove: ${shape}`);
+                }
+            }
+        });
     }
 
     private tick(): void {
-        if (!this._isReadyToHandleTick)
+        if (!this._isShapesLockFree)
             return;
 
-        this._isReadyToHandleTick = false;
+        this.lockShapes(() => {
+            this._bubbles
+                .filter(this.isCollidingWithAnyLava(this._lavas))
+                .forEach((b: Bubble) => b.pop());
 
-        let bubbles: Bubble[] = this._stage.children
-            .filter(BubbleGunner.Funcs.isOfType(Bubble))
-            .map(BubbleGunner.Funcs.toType<Bubble>());
-
-        let animals: Animal[] = this._stage.children
-            .filter(BubbleGunner.Funcs.isOfType(Animal))
-            .map(BubbleGunner.Funcs.toType<Animal>());
-
-        let collidingBubbles: [Bubble, Animal][] = bubbles
-            .map(b => [b, animals.filter(BubbleGunner.Funcs.isCollidingWith(b))])
-            .filter(BubbleGunner.Funcs.hasCollisions)
-            .map(tuple => <[Bubble, Animal]>[tuple[0], tuple[1][0]])
-        ;
-
-        collidingBubbles.forEach(tuple => {
-            this.wrapAnimalInBubble(tuple[0], tuple[1]);
+            this._bubbles
+                .filter(b => !b.containsAnimal)
+                .map(b => [b, this.findAnimalsCollidingWithBubble(b)])
+                .filter(BubbleGunner.Funcs.hasCollisions)
+                .map(tuple => <[Bubble, Animal]>[tuple[0], tuple[1][0]])
+                .forEach((tuple: [Bubble, Animal]) => tuple[0].takeAnimal(tuple[1]));
         });
-
-        this._isReadyToHandleTick = true;
-    }
-
-    private wrapAnimalInBubble(bubble: Bubble, animal: Animal): void {
-        bubble.setAnimal(animal);
-        bubble.graphics
-            .clear()
-            .beginFill('rgba(255, 255, 255, .1)')
-            .beginStroke('rgba(255, 255, 255, .8)')
-            .drawCircle(0, 0, 15 + 5);
-        bubble.x = animal.x;
-        bubble.y = animal.y;
-
-        Tween.removeTweens(bubble);
-        Tween.removeTweens(animal);
-        const time = 3500;
-        const y = -25;
-
-        Tween.get(animal)
-            .to({
-                y: y
-            }, time);
-        Tween.get(bubble)
-            .to({
-                y: y
-            }, time)
-            .call(() => {
-                this._stage.removeChild(bubble, animal);
-
-                this._isReadyToHandleTick = false;
-                let i: number;
-
-                i = this._animals.indexOf(animal);
-                if (i > -1) this._animals[i] = null;
-
-                i = this._bubbles.indexOf(bubble);
-                if (i > -1) this._bubbles[i] = null;
-
-                this._isReadyToHandleTick = true;
-            });
     }
 
     private getRandomX(): number {
@@ -321,6 +324,22 @@ class GameManager {
         let y: number;
         y = (Math.random() * 876372147) % canvas.height;
         return y;
+    }
+
+    private lockShapes(f: Function) {
+        this._isShapesLockFree = false;
+        f();
+        this._isShapesLockFree = true;
+    }
+
+    private findAnimalsCollidingWithBubble(bubble: Bubble): Animal[] {
+        return this._animals.filter(BubbleGunner.Funcs.isCollidingWith(bubble));
+    }
+
+    private isCollidingWithAnyLava(lavas: Lava[]) {
+        return (b: Bubble) => (lavas
+            .filter(l => Math.sqrt(Math.pow(b.y - l.y, 2) + Math.pow(b.x - l.x, 2)) < 30)
+            .length > 0);
     }
 }
 

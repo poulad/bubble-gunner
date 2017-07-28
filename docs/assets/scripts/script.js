@@ -36,16 +36,6 @@ var BubbleGunner;
         Funcs.hasCollisions = hasCollisions;
     })(Funcs = BubbleGunner.Funcs || (BubbleGunner.Funcs = {}));
 })(BubbleGunner || (BubbleGunner = {}));
-function addToArray(array, item) {
-    var i = 0;
-    for (; i < array.length; i++) {
-        if (array[i] === null) {
-            break;
-        }
-    }
-    array[i] = item;
-    return i;
-}
 var Point = (function () {
     function Point(x, y) {
         if (x === void 0) { x = 0; }
@@ -69,19 +59,25 @@ var Animal = (function (_super) {
         return _this;
     }
     Animal.prototype.moveTo = function (point) {
-        var _this = this;
         this.endPoint = point;
-        var t = Tween.get(this)
+        return Tween.get(this)
             .to({
             x: point.x,
             y: point.y,
         }, 7000)
-            .call(function () {
-            Tween.get(_this)
-                .to({ alpha: 0 }, 300);
-        });
-        return t;
+            .call(this.fallCallback.bind(this));
     };
+    Animal.prototype.continueFall = function () {
+        Tween.removeTweens(this);
+        var newEndPoint = new Point(this.endPoint.x, canvas.height);
+        return this.moveTo(newEndPoint);
+    };
+    Animal.prototype.fallCallback = function () {
+        return Tween.get(this)
+            .to({ alpha: .3 }, 300)
+            .call(this.dispatchEvent.bind(this, Animal.EventFell));
+    };
+    Animal.EventFell = "fell";
     return Animal;
 }(Shape));
 var Lava = (function (_super) {
@@ -97,14 +93,16 @@ var Lava = (function (_super) {
         return _this;
     }
     Lava.prototype.moveTo = function (point) {
+        var _this = this;
         this.endPoint = point;
-        var t = Tween.get(this)
+        return Tween.get(this)
             .to({
             x: this.endPoint.x,
             y: this.endPoint.y,
-        }, 5500);
-        return t;
+        }, 5500)
+            .call(function () { return _this.dispatchEvent(new Event(Lava.EventFell)); });
     };
+    Lava.EventFell = "fell";
     Lava.width = 12;
     Lava.height = 15;
     return Lava;
@@ -114,13 +112,12 @@ var Bubble = (function (_super) {
     function Bubble(targetPoint) {
         var _this = _super.call(this) || this;
         _this.containsAnimal = false;
-        _this._pulseEventListener = _this.pulse.bind(_this);
         _this._pulseCount = 0;
         _this.graphics
             .beginFill('rgba(255, 255, 255, .1)')
             .beginStroke('rgba(255, 255, 255, .8)')
             .drawCircle(0, 0, Bubble.r);
-        _this.addEventListener("tick", _this._pulseEventListener);
+        _this.on("tick", _this.pulse, _this);
         var initPoint = new Point(canvas.width / 2, canvas.height - 20);
         _this.x = initPoint.x;
         _this.y = initPoint.y;
@@ -130,17 +127,33 @@ var Bubble = (function (_super) {
     }
     Bubble.prototype.move = function () {
         this.updateEndPoint();
-        var tween;
-        tween = Tween.get(this)
+        return Tween.get(this)
             .to({
             x: this.endPoint.x,
             y: this.endPoint.y,
-        }, 4000);
-        return tween;
+        }, 4000)
+            .call(this.dispatchEvent.bind(this, new Event(Bubble.EventAscended)));
     };
-    Bubble.prototype.setAnimal = function (animal) {
+    Bubble.prototype.takeAnimal = function (animal) {
+        var _this = this;
         this._animal = animal;
-        this.containsAnimal = this._animal != undefined;
+        this.containsAnimal = true;
+        this.graphics
+            .clear()
+            .beginFill('rgba(255, 255, 255, .1)')
+            .beginStroke('rgba(255, 255, 255, .8)')
+            .drawCircle(0, 0, 15 + 5);
+        this.x = this._animal.x;
+        this.y = this._animal.y;
+        Tween.removeTweens(this._animal);
+        Tween.removeTweens(this);
+        var targetY = -7;
+        var duration = 3500;
+        var tween = Tween.get(this)
+            .to({ y: targetY }, duration)
+            .call(this.dispatchEvent.bind(this, new Event(Bubble.EventRescuedAnimal)));
+        tween.on("change", function () { return _this._animal.y = _this.y; }, this);
+        return tween;
     };
     Bubble.prototype.getAnimal = function () {
         return this._animal;
@@ -164,6 +177,19 @@ var Bubble = (function (_super) {
         this.endPoint.y = 0;
         this.endPoint.x = -(b / m);
     };
+    Bubble.prototype.pop = function () {
+        Tween.removeTweens(this);
+        if (this.containsAnimal) {
+            this._animal.continueFall();
+        }
+        return Tween.get(this)
+            .to({
+            alpha: 0
+        }).call(this.dispatchEvent.bind(this, new Event(Bubble.EventPopped)));
+    };
+    Bubble.EventPopped = "popped";
+    Bubble.EventAscended = "ascended";
+    Bubble.EventRescuedAnimal = "rescued";
     Bubble.r = 15;
     return Bubble;
 }(Shape));
@@ -173,108 +199,95 @@ var GameManager = (function () {
         this._animals = [];
         this._bubbles = [];
         this._lavas = [];
-        this._stageTickEventListener = this.tick.bind(this);
-        this._stageClickEventListener = this.handleClick.bind(this);
-        this._isReadyToHandleTick = true;
+        this._isShapesLockFree = true;
     }
     GameManager.prototype.start = function () {
-        var intervalAnimal = setInterval(this.handleInterval.bind(this), 3000);
-        var intervalLavaRain = setInterval(this.handleLavaRainInterval.bind(this), 4000);
-        this._stage.addEventListener("stagemouseup", this._stageClickEventListener, false);
-        this._stage.addEventListener("tick", this._stageTickEventListener);
+        setInterval(this.handleAnimalRainInterval.bind(this), 3000);
+        setInterval(this.handleLavaRainInterval.bind(this), 4000);
+        this._stage.on("stagemouseup", this.handleClick, this);
+        this._stage.on("tick", this.tick, this);
     };
-    GameManager.prototype.handleInterval = function () {
+    GameManager.prototype.handleAnimalRainInterval = function () {
+        var _this = this;
         var animal = new Animal(new Point(this.getRandomX(), 0));
-        var index = addToArray(this._animals, animal);
+        this.lockShapes(function () {
+            _this._animals.push(animal);
+        });
         this._stage.addChild(animal);
         console.debug(this._animals);
-        animal.moveTo(new Point(this.getRandomX(), canvas.width))
-            .call(this.removeShape.bind(this, animal, index));
+        animal.on(Animal.EventFell, function () { return _this.removeShape(animal); }, this);
+        animal.moveTo(new Point(this.getRandomX(), canvas.width));
     };
     GameManager.prototype.handleLavaRainInterval = function () {
+        var _this = this;
         var lava = new Lava(new Point(this.getRandomX(), 0));
-        var index = addToArray(this._lavas, lava);
+        this.lockShapes(function () { return _this._lavas.push(lava); });
         this._stage.addChild(lava);
         console.debug(this._lavas);
-        lava.moveTo(new Point(this.getRandomX(), canvas.width))
-            .call(this.removeShape.bind(this, lava, index));
+        lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, this);
+        lava.moveTo(new Point(this.getRandomX(), canvas.width));
     };
     GameManager.prototype.handleClick = function (evt) {
+        var _this = this;
         var bubble = new Bubble(new Point(evt.stageX, evt.stageY));
-        var index = addToArray(this._bubbles, bubble);
+        this.lockShapes(function () {
+            _this._bubbles.push(bubble);
+        });
         this._stage.addChild(bubble);
         console.debug(this._bubbles);
-        bubble.move()
-            .call(this.removeShape.bind(this, bubble, index));
+        bubble.on(Bubble.EventPopped, function () { return _this.removeShape(bubble); }, this);
+        bubble.on(Bubble.EventAscended, function () { return _this.removeShape(bubble); }, this);
+        bubble.on(Bubble.EventRescuedAnimal, function () { return _this.removeShape(bubble.getAnimal(), bubble); }, this);
+        bubble.move();
     };
-    GameManager.prototype.removeShape = function (shape, index) {
-        if (index === void 0) { index = undefined; }
-        this._stage.removeChild(shape);
-        if (index === undefined)
-            return;
-        if (shape instanceof Bubble) {
-            this._bubbles[index] = null;
+    GameManager.prototype.removeShape = function () {
+        var _this = this;
+        var shapes = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            shapes[_i] = arguments[_i];
         }
-        else if (shape instanceof Animal) {
-            this._animals[index] = null;
-        }
-        else if (shape instanceof Lava) {
-            this._lavas[index] = null;
-        }
+        this.lockShapes(function () {
+            var _loop_1 = function (shape) {
+                _this._stage.removeChild(shape);
+                if (shape instanceof Bubble) {
+                    _this._bubbles = _this._bubbles
+                        .filter(function (b) { return b !== shape && b != undefined; });
+                    console.debug(_this._bubbles);
+                }
+                else if (shape instanceof Animal) {
+                    _this._animals = _this._animals
+                        .filter(function (a) { return a !== shape && a != undefined; });
+                    console.debug(_this._animals);
+                }
+                else if (shape instanceof Lava) {
+                    _this._lavas = _this._lavas
+                        .filter(function (l) { return l !== shape && l != undefined; });
+                    console.debug(_this._lavas);
+                }
+                else {
+                    console.warn("Unkown type to remove: " + shape);
+                }
+            };
+            for (var _i = 0, shapes_1 = shapes; _i < shapes_1.length; _i++) {
+                var shape = shapes_1[_i];
+                _loop_1(shape);
+            }
+        });
     };
     GameManager.prototype.tick = function () {
         var _this = this;
-        if (!this._isReadyToHandleTick)
+        if (!this._isShapesLockFree)
             return;
-        this._isReadyToHandleTick = false;
-        var bubbles = this._stage.children
-            .filter(BubbleGunner.Funcs.isOfType(Bubble))
-            .map(BubbleGunner.Funcs.toType());
-        var animals = this._stage.children
-            .filter(BubbleGunner.Funcs.isOfType(Animal))
-            .map(BubbleGunner.Funcs.toType());
-        var collidingBubbles = bubbles
-            .map(function (b) { return [b, animals.filter(BubbleGunner.Funcs.isCollidingWith(b))]; })
-            .filter(BubbleGunner.Funcs.hasCollisions)
-            .map(function (tuple) { return [tuple[0], tuple[1][0]]; });
-        collidingBubbles.forEach(function (tuple) {
-            _this.wrapAnimalInBubble(tuple[0], tuple[1]);
-        });
-        this._isReadyToHandleTick = true;
-    };
-    GameManager.prototype.wrapAnimalInBubble = function (bubble, animal) {
-        var _this = this;
-        bubble.setAnimal(animal);
-        bubble.graphics
-            .clear()
-            .beginFill('rgba(255, 255, 255, .1)')
-            .beginStroke('rgba(255, 255, 255, .8)')
-            .drawCircle(0, 0, 15 + 5);
-        bubble.x = animal.x;
-        bubble.y = animal.y;
-        Tween.removeTweens(bubble);
-        Tween.removeTweens(animal);
-        var time = 3500;
-        var y = -25;
-        Tween.get(animal)
-            .to({
-            y: y
-        }, time);
-        Tween.get(bubble)
-            .to({
-            y: y
-        }, time)
-            .call(function () {
-            _this._stage.removeChild(bubble, animal);
-            _this._isReadyToHandleTick = false;
-            var i;
-            i = _this._animals.indexOf(animal);
-            if (i > -1)
-                _this._animals[i] = null;
-            i = _this._bubbles.indexOf(bubble);
-            if (i > -1)
-                _this._bubbles[i] = null;
-            _this._isReadyToHandleTick = true;
+        this.lockShapes(function () {
+            _this._bubbles
+                .filter(_this.isCollidingWithAnyLava(_this._lavas))
+                .forEach(function (b) { return b.pop(); });
+            _this._bubbles
+                .filter(function (b) { return !b.containsAnimal; })
+                .map(function (b) { return [b, _this.findAnimalsCollidingWithBubble(b)]; })
+                .filter(BubbleGunner.Funcs.hasCollisions)
+                .map(function (tuple) { return [tuple[0], tuple[1][0]]; })
+                .forEach(function (tuple) { return tuple[0].takeAnimal(tuple[1]); });
         });
     };
     GameManager.prototype.getRandomX = function () {
@@ -286,6 +299,19 @@ var GameManager = (function () {
         var y;
         y = (Math.random() * 876372147) % canvas.height;
         return y;
+    };
+    GameManager.prototype.lockShapes = function (f) {
+        this._isShapesLockFree = false;
+        f();
+        this._isShapesLockFree = true;
+    };
+    GameManager.prototype.findAnimalsCollidingWithBubble = function (bubble) {
+        return this._animals.filter(BubbleGunner.Funcs.isCollidingWith(bubble));
+    };
+    GameManager.prototype.isCollidingWithAnyLava = function (lavas) {
+        return function (b) { return (lavas
+            .filter(function (l) { return Math.sqrt(Math.pow(b.y - l.y, 2) + Math.pow(b.x - l.x, 2)) < 30; })
+            .length > 0); };
     };
     return GameManager;
 }());
