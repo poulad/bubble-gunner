@@ -2,13 +2,46 @@
 
 A CreateJS game
 
+## Features
+
+### Animations
+
+- All tweens at the same speed(about 200 pixels per second)
+
 ## ToDo
+
+### Scores
+
+- Scores on top middle
+  - Each animal rescued is +1 score
+  - Player does not loose score
+  - Shown as a bar that fills up and score number below it
+  - When filled up, next level begins 
+
+### Power Ups
+
+- A bubble bomb
+
+### Scenes
+
+- Menu
+  - Might be used on gamePause as well(a button for resume or new game should be shown)
+- Controls
+- Game
+- GameOver
+  - shows score
+  - a button to start new game
+  - a button to get back to Menu
+  
+### Spritesheets
+
+- Add spritesheets
 
 ### Animations
 
 - When Bubble catches the animal, it swings as it goes up
-- Control speed of fall(animal, lava) or rise(bubble)
 - When a bubble containing an animal pops, animal should continue the fall with the same speed  
+- Fancy loading... image
 
 ### Obstacles
 
