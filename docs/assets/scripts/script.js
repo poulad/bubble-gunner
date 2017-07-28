@@ -18,6 +18,8 @@ var canvas;
 var BubbleGunner;
 (function (BubbleGunner) {
     var Text = createjs.Text;
+    var Bitmap = createjs.Bitmap;
+    var Ease = createjs.Ease;
     function isOfType(type) {
         return function (o) { return o instanceof type; };
     }
@@ -50,6 +52,9 @@ var BubbleGunner;
             this.x = x;
             this.y = y;
         }
+        Point.prototype.toString = function () {
+            return "(" + this.x + " , " + this.y + ")";
+        };
         return Point;
     }());
     BubbleGunner.Point = Point;
@@ -118,7 +123,7 @@ var BubbleGunner;
     }(Shape));
     var Bubble = (function (_super) {
         __extends(Bubble, _super);
-        function Bubble(targetPoint) {
+        function Bubble(from, to) {
             var _this = _super.call(this) || this;
             _this.containsAnimal = false;
             _this._pulseCount = 0;
@@ -127,11 +132,10 @@ var BubbleGunner;
                 .beginStroke('rgba(255, 255, 255, .8)')
                 .drawCircle(0, 0, Bubble.r);
             _this.on("tick", _this.pulse, _this);
-            var initPoint = new Point(canvas.width / 2, canvas.height - 20);
-            _this.x = initPoint.x;
-            _this.y = initPoint.y;
-            _this.startPoint = initPoint;
-            _this.endPoint = targetPoint;
+            _this.startPoint = from;
+            _this.x = _this.startPoint.x;
+            _this.y = _this.startPoint.y;
+            _this.endPoint = to;
             return _this;
         }
         Bubble.prototype.move = function () {
@@ -202,6 +206,37 @@ var BubbleGunner;
         Bubble.r = 15;
         return Bubble;
     }(Shape));
+    var Dragon = (function (_super) {
+        __extends(Dragon, _super);
+        function Dragon() {
+            var _this = _super.call(this) || this;
+            _this._body = new Bitmap("assets/images/dragon.png");
+            _this._hand = new Bitmap("assets/images/hand.png");
+            _this._hand.x = 0;
+            _this._hand.y = 170;
+            _this._gun = new Bitmap("assets/images/gun.png");
+            _this._gun.x = -165;
+            _this._gun.y = 100;
+            _this.addChild(_this._body, _this._gun, _this._hand);
+            return _this;
+        }
+        Dragon.prototype.shootBubbleTo = function (point) {
+            var bubble = new Bubble(this.getGunMuzzlePoint(), point);
+            bubble.scaleX = bubble.scaleY = .1;
+            Tween.get(bubble)
+                .to({
+                scaleX: 1,
+                scaleY: 1,
+            }, 150, Ease.bounceOut);
+            return bubble;
+        };
+        Dragon.prototype.getGunMuzzlePoint = function () {
+            var p = new Point(this.x + (this._gun.x + 70) * this.scaleX, this.y + (this._gun.y + 110) * this.scaleY);
+            console.debug("Shooting bubble from: " + p);
+            return p;
+        };
+        return Dragon;
+    }(Container));
     var ScoresBar = (function (_super) {
         __extends(ScoresBar, _super);
         function ScoresBar(percent) {
@@ -235,10 +270,15 @@ var BubbleGunner;
         GameManager.prototype.start = function () {
             setInterval(this.handleAnimalRainInterval.bind(this), 3000);
             setInterval(this.handleLavaRainInterval.bind(this), 4000);
-            var scores = new ScoresBar();
-            scores.x = 100;
-            scores.y = 50;
-            this._stage.addChild(scores);
+            // let scores = new ScoresBar(); // ToDo
+            // scores.x = 100;
+            // scores.y = 50;
+            // this._stage.addChild(scores);
+            this._dragon = new Dragon();
+            this._dragon.scaleX = this._dragon.scaleY = .25;
+            this._dragon.x = canvas.width / 2 - 25;
+            this._dragon.y = canvas.height - 100;
+            this._stage.addChild(this._dragon);
             this._stage.on("stagemouseup", this.handleClick, this);
             this._stage.on("tick", this.tick, this);
         };
@@ -264,7 +304,7 @@ var BubbleGunner;
         };
         GameManager.prototype.handleClick = function (evt) {
             var _this = this;
-            var bubble = new Bubble(new Point(evt.stageX, evt.stageY));
+            var bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
             this.lockShapes(function () {
                 _this._bubbles.push(bubble);
             });

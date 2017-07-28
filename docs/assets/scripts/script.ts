@@ -9,6 +9,8 @@ let canvas: HTMLCanvasElement;
 
 namespace BubbleGunner {
     import Text = createjs.Text;
+    import Bitmap = createjs.Bitmap;
+    import Ease = createjs.Ease;
 
     export function isOfType<T>(type: T) {
         return (o: any) => o instanceof (<any>type);
@@ -41,6 +43,10 @@ namespace BubbleGunner {
         public constructor(x: number = 0, y: number = 0) {
             this.x = x;
             this.y = y;
+        }
+
+        public toString(): string {
+            return `(${this.x} , ${this.y})`;
         }
     }
 
@@ -134,7 +140,7 @@ namespace BubbleGunner {
         private _pulseCount = 0;
         private static r = 15;
 
-        constructor(targetPoint: Point) {
+        constructor(from: Point, to: Point) {
             super();
             this.graphics
                 .beginFill('rgba(255, 255, 255, .1)')
@@ -142,11 +148,10 @@ namespace BubbleGunner {
                 .drawCircle(0, 0, Bubble.r);
             this.on(`tick`, this.pulse, this);
 
-            let initPoint = new Point(canvas.width / 2, canvas.height - 20);
-            this.x = initPoint.x;
-            this.y = initPoint.y;
-            this.startPoint = initPoint;
-            this.endPoint = targetPoint;
+            this.startPoint = from;
+            this.x = this.startPoint.x;
+            this.y = this.startPoint.y;
+            this.endPoint = to;
         }
 
         public move(): Tween {
@@ -226,6 +231,46 @@ namespace BubbleGunner {
         }
     }
 
+    class Dragon extends Container {
+        private _body: Bitmap;
+        private _hand: Bitmap;
+        private _gun: Bitmap;
+
+        constructor() {
+            super();
+            this._body = new Bitmap(`assets/images/dragon.png`);
+            this._hand = new Bitmap(`assets/images/hand.png`);
+
+            this._hand.x = 0;
+            this._hand.y = 170;
+
+            this._gun = new Bitmap(`assets/images/gun.png`);
+            this._gun.x = -165;
+            this._gun.y = 100;
+
+            this.addChild(this._body, this._gun, this._hand);
+        }
+
+        public shootBubbleTo(point: Point): Bubble {
+            let bubble = new Bubble(this.getGunMuzzlePoint(), point);
+
+            bubble.scaleX = bubble.scaleY = .1;
+            Tween.get(bubble)
+                .to({
+                    scaleX: 1,
+                    scaleY: 1,
+                }, 150, Ease.bounceOut);
+
+            return bubble;
+        }
+
+        private getGunMuzzlePoint(): Point {
+            let p = new Point(this.x + (this._gun.x + 70) * this.scaleX, this.y + (this._gun.y + 110) * this.scaleY);
+            console.debug(`Shooting bubble from: ${p}`);
+            return p;
+        }
+    }
+
     class ScoresBar extends Container {
         private _bar: Shape;
         private _scoreText: Text;
@@ -252,6 +297,7 @@ namespace BubbleGunner {
     }
 
     export class GameManager {
+        private _dragon: Dragon;
         private _animals: Animal[] = [];
         private _bubbles: Bubble[] = [];
         private _lavas: Lava[] = [];
@@ -265,10 +311,17 @@ namespace BubbleGunner {
             setInterval(this.handleAnimalRainInterval.bind(this), 3000);
             setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
-            let scores = new ScoresBar();
-            scores.x = 100;
-            scores.y = 50;
-            this._stage.addChild(scores);
+            // let scores = new ScoresBar(); // ToDo
+            // scores.x = 100;
+            // scores.y = 50;
+            // this._stage.addChild(scores);
+
+            this._dragon = new Dragon();
+            this._dragon.scaleX = this._dragon.scaleY = .25;
+            this._dragon.x = canvas.width / 2 - 25;
+            this._dragon.y = canvas.height - 100;
+
+            this._stage.addChild(this._dragon);
 
             this._stage.on(`stagemouseup`, this.handleClick, this);
             this._stage.on(`tick`, this.tick, this);
@@ -297,7 +350,7 @@ namespace BubbleGunner {
         }
 
         private handleClick(evt: createjs.MouseEvent): void {
-            let bubble = new Bubble(new Point(evt.stageX, evt.stageY));
+            let bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
             this.lockShapes(() => {
                 this._bubbles.push(bubble);
             });
