@@ -232,37 +232,37 @@ namespace BubbleGunner {
         }
     }
 
+    class DragonHand extends Bitmap {
+        constructor() {
+            super(`assets/images/dragon-hand.png`);
+
+            this.regX = 426;
+            this.regY = 110;
+        }
+    }
+
     class Dragon extends Container {
         private _body: Bitmap;
-        private _hand: Bitmap;
-        private _gun: Bitmap;
-        private _gunContainer: Container;
+        private _hand: DragonHand;
 
         constructor() {
             super();
             this._body = new Bitmap(`assets/images/dragon.png`);
-            this._hand = new Bitmap(`assets/images/hand.png`);
 
-            this._hand.x = 0;
-            this._hand.y = 170;
+            this._hand = new Bitmap(`assets/images/dragon-hand.png`);
+            this._hand.regX = 426;
+            this._hand.regY = 110;
+            this._hand.x = 250;
+            this._hand.y = 180;
 
-            this._gun = new Bitmap(`assets/images/gun.png`);
-            this._gun.regX = 379;
-            this._gun.regY = 101.5;
-            this._gun.x = this._gun.regX - 165;
-            this._gun.y = this._gun.regY + 100;
-
-            this._gunContainer = new Container();
-            this._gunContainer.addChild(this._gun, this._hand);
-
-            this.addChild(this._body, this._gun, this._hand);
+            this.addChild(this._body, this._hand);
         }
 
         public shootBubbleTo(point: Point): Bubble {
             this.aimGunToPoint(point);
 
             let bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
-            // console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
+            console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
             bubble.scaleX = bubble.scaleY = .1;
             Tween.get(bubble)
                 .to({
@@ -278,43 +278,44 @@ namespace BubbleGunner {
         }
 
         private aimGunToPoint(targetPoint: Point): void {
-            let gunPoint = this.getGunRegStagePoint();
-
-            if (gunPoint.x < targetPoint.x) {
+            let handRegStagePoint = this.getHandRegStagePoint();
+            if (handRegStagePoint.x < targetPoint.x) {
                 this.scaleX = -Math.abs(this.scaleX);
             } else {
                 this.scaleX = Math.abs(this.scaleX);
             }
+            handRegStagePoint = this.getHandRegStagePoint();
 
-            gunPoint = this.getGunRegStagePoint();
+            let yz = handRegStagePoint.y - targetPoint.y;
+            let xz = handRegStagePoint.x - targetPoint.x;
 
-            let yz = gunPoint.y - targetPoint.y;
-            let xz = gunPoint.x - targetPoint.x;
-            this._gun.rotation = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+            let angle: number;
+            angle = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+            this._hand.rotation = angle;
             // console.debug(`aiming at angle: ${angle}`);
+        }
+
+        private getHandRegStagePoint(): Point {
+            return new Point(
+                this.x + this._hand.x * this.scaleX,
+                this.y + this._hand.y * this.scaleY
+            );
         }
 
         private getGunMuzzleStagePoint(): Point {
             let p: Point = new Point();
 
-            let rotationRadians = Math.PI + this._gun.rotation * Math.PI / 180;
+            let rotationRadians = Math.PI + this._hand.rotation * Math.PI / 180;
             if (this.scaleX < 0) {
                 rotationRadians = 2 * Math.PI - rotationRadians;
             }
-            let radius = this._gun.image.width * this.scaleX;
-            let center = this.getGunRegStagePoint();
+            let radius = 426 * this.scaleX;
+            let center = this.getHandRegStagePoint();
             p.x = center.x + radius * Math.cos(rotationRadians);
             p.y = center.y + radius * Math.sin(rotationRadians);
 
             // console.debug(`Gun muzzle at: ${p}`);
             return p;
-        }
-
-        private getGunRegStagePoint(): Point {
-            return new Point(
-                this.x + (this._gun.x) * this.scaleX,
-                this.y + (this._gun.y) * this.scaleY
-            );
         }
     }
 
@@ -384,7 +385,7 @@ namespace BubbleGunner {
             console.debug(this._animals);
 
             animal.on(Animal.EventFell, () => this.removeShape(animal), this);
-            animal.moveTo(new Point(this.getRandomX(), canvas.width));
+            animal.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
         }
 
         private handleLavaRainInterval() {
@@ -394,7 +395,7 @@ namespace BubbleGunner {
             console.debug(this._lavas);
 
             lava.on(Lava.EventFell, () => this.removeShape(lava), this);
-            lava.moveTo(new Point(this.getRandomX(), canvas.width));
+            lava.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
         }
 
         private handleClick(evt: createjs.MouseEvent): void {
@@ -482,6 +483,10 @@ namespace BubbleGunner {
             return (b: Bubble) => (lavas
                 .filter(l => Math.sqrt(Math.pow(b.y - l.y, 2) + Math.pow(b.x - l.x, 2)) < 30)
                 .length > 0);
+        }
+
+        private getCanvasDimensions(): [number, number] {
+            return [canvas.width, canvas.height];
         }
     }
 }

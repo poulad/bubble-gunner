@@ -6,9 +6,15 @@ A CreateJS game
 
 ### Animations
 
+- Dragon aims gun at the point user clicks/moves his mouse
+- Bubbles always fire from gun muzzle 
 - All tweens at the same speed(about 200 pixels per second)
 
 ## ToDo
+
+### Object Scales
+
+- Scale objects relative to the canvas size so proportions are consistent
 
 ### Scores
 

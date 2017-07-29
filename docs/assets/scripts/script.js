@@ -206,28 +206,33 @@ var BubbleGunner;
         Bubble.r = 15;
         return Bubble;
     }(Shape));
+    var DragonHand = (function (_super) {
+        __extends(DragonHand, _super);
+        function DragonHand() {
+            var _this = _super.call(this, "assets/images/dragon-hand.png") || this;
+            _this.regX = 426;
+            _this.regY = 110;
+            return _this;
+        }
+        return DragonHand;
+    }(Bitmap));
     var Dragon = (function (_super) {
         __extends(Dragon, _super);
         function Dragon() {
             var _this = _super.call(this) || this;
             _this._body = new Bitmap("assets/images/dragon.png");
-            _this._hand = new Bitmap("assets/images/hand.png");
-            _this._hand.x = 0;
-            _this._hand.y = 170;
-            _this._gun = new Bitmap("assets/images/gun.png");
-            _this._gun.regX = 379;
-            _this._gun.regY = 101.5;
-            _this._gun.x = _this._gun.regX - 165;
-            _this._gun.y = _this._gun.regY + 100;
-            _this._gunContainer = new Container();
-            _this._gunContainer.addChild(_this._gun, _this._hand);
-            _this.addChild(_this._body, _this._gun, _this._hand);
+            _this._hand = new Bitmap("assets/images/dragon-hand.png");
+            _this._hand.regX = 426;
+            _this._hand.regY = 110;
+            _this._hand.x = 250;
+            _this._hand.y = 180;
+            _this.addChild(_this._body, _this._hand);
             return _this;
         }
         Dragon.prototype.shootBubbleTo = function (point) {
             this.aimGunToPoint(point);
             var bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
-            // console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
+            console.debug("Shooting bubble from: " + this.getGunMuzzleStagePoint());
             bubble.scaleX = bubble.scaleY = .1;
             Tween.get(bubble)
                 .to({
@@ -240,34 +245,36 @@ var BubbleGunner;
             this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
         };
         Dragon.prototype.aimGunToPoint = function (targetPoint) {
-            var gunPoint = this.getGunRegStagePoint();
-            if (gunPoint.x < targetPoint.x) {
+            var handRegStagePoint = this.getHandRegStagePoint();
+            if (handRegStagePoint.x < targetPoint.x) {
                 this.scaleX = -Math.abs(this.scaleX);
             }
             else {
                 this.scaleX = Math.abs(this.scaleX);
             }
-            gunPoint = this.getGunRegStagePoint();
-            var yz = gunPoint.y - targetPoint.y;
-            var xz = gunPoint.x - targetPoint.x;
-            this._gun.rotation = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+            handRegStagePoint = this.getHandRegStagePoint();
+            var yz = handRegStagePoint.y - targetPoint.y;
+            var xz = handRegStagePoint.x - targetPoint.x;
+            var angle;
+            angle = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+            this._hand.rotation = angle;
             // console.debug(`aiming at angle: ${angle}`);
+        };
+        Dragon.prototype.getHandRegStagePoint = function () {
+            return new Point(this.x + this._hand.x * this.scaleX, this.y + this._hand.y * this.scaleY);
         };
         Dragon.prototype.getGunMuzzleStagePoint = function () {
             var p = new Point();
-            var rotationRadians = Math.PI + this._gun.rotation * Math.PI / 180;
+            var rotationRadians = Math.PI + this._hand.rotation * Math.PI / 180;
             if (this.scaleX < 0) {
                 rotationRadians = 2 * Math.PI - rotationRadians;
             }
-            var radius = this._gun.image.width * this.scaleX;
-            var center = this.getGunRegStagePoint();
+            var radius = 426 * this.scaleX;
+            var center = this.getHandRegStagePoint();
             p.x = center.x + radius * Math.cos(rotationRadians);
             p.y = center.y + radius * Math.sin(rotationRadians);
             // console.debug(`Gun muzzle at: ${p}`);
             return p;
-        };
-        Dragon.prototype.getGunRegStagePoint = function () {
-            return new Point(this.x + (this._gun.x) * this.scaleX, this.y + (this._gun.y) * this.scaleY);
         };
         return Dragon;
     }(Container));
@@ -326,7 +333,7 @@ var BubbleGunner;
             this._stage.addChild(animal);
             console.debug(this._animals);
             animal.on(Animal.EventFell, function () { return _this.removeShape(animal); }, this);
-            animal.moveTo(new Point(this.getRandomX(), canvas.width));
+            animal.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
         };
         GameManager.prototype.handleLavaRainInterval = function () {
             var _this = this;
@@ -335,7 +342,7 @@ var BubbleGunner;
             this._stage.addChild(lava);
             console.debug(this._lavas);
             lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, this);
-            lava.moveTo(new Point(this.getRandomX(), canvas.width));
+            lava.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
         };
         GameManager.prototype.handleClick = function (evt) {
             var _this = this;
@@ -422,6 +429,9 @@ var BubbleGunner;
             return function (b) { return (lavas
                 .filter(function (l) { return Math.sqrt(Math.pow(b.y - l.y, 2) + Math.pow(b.x - l.x, 2)) < 30; })
                 .length > 0); };
+        };
+        GameManager.prototype.getCanvasDimensions = function () {
+            return [canvas.width, canvas.height];
         };
         return GameManager;
     }());
