@@ -1,17 +1,16 @@
-import Shape = createjs.Shape;
-import Stage = createjs.Stage;
-import Ticker = createjs.Ticker;
-import Tween = createjs.Tween;
-import DisplayObject = createjs.DisplayObject;
-import Container = createjs.Container;
-
 let canvas: HTMLCanvasElement;
 
 namespace BubbleGunner {
+    import Shape = createjs.Shape;
+    import Stage = createjs.Stage;
+    import Tween = createjs.Tween;
+    import DisplayObject = createjs.DisplayObject;
+    import Container = createjs.Container;
     import Text = createjs.Text;
     import Bitmap = createjs.Bitmap;
     import Ease = createjs.Ease;
     import MouseEvent = createjs.MouseEvent;
+    import EventDispatcher = createjs.EventDispatcher;
 
     export function isOfType<T>(type: T) {
         return (o: any) => o instanceof (<any>type);
@@ -319,32 +318,76 @@ namespace BubbleGunner {
         }
     }
 
+    class LevelManager extends EventDispatcher {
+        public static EventLevelChanged: string = `levelChanged`;
+        public currentLevel: number = 1;
+
+        private static Level1MaxScore = 4;
+
+        public getLevelMaxScore(level?: number): number {
+            if (level == undefined) {
+                level = this.currentLevel;
+            }
+            return LevelManager.Level1MaxScore * level;
+        }
+
+        public setScore(score: number): void {
+            if (this.currentLevel < 3 && score > this.getLevelMaxScore()) {
+                this.currentLevel++;
+                this.dispatchEvent(new Event(LevelManager.EventLevelChanged));
+            }
+            // console.debug(`score => ${score}`);
+            // console.debug(`level => ${this.currentLevel}`);
+        }
+    }
+
     class ScoresBar extends Container {
         private _bar: Shape;
         private _scoreText: Text;
+        private _score: number;
 
-        constructor(percent: number = 0) {
+        constructor(private _levelManager: LevelManager, initialScore: number = 0) {
             super();
-            const width = 300;
-            const height = 50;
+            this._score = initialScore;
+
+            const width = 200;
+            const height = 30;
 
             this._bar = new Shape();
             this._bar.graphics
                 .beginFill(`yellow`)
-                .drawRect(0, 0, width, height);
-            this._bar.scaleX = percent / 100;
+                .drawRect(0, 0, 2, 5);
+            this._bar.scaleX = 0;
             this._bar.x = 0;
             this._bar.y = 0;
 
-            this._scoreText = new Text('10', undefined, 'white');
+            this._scoreText = new Text(this._score.toString(), undefined, 'white');
             this._scoreText.x = width / 2;
             this._scoreText.y = height + 10;
 
             this.addChild(this._bar, this._scoreText);
         }
+
+        public increaseScore(): void {
+            this.setScore(this._score + 1);
+        }
+
+        private setScore(score: number): void {
+            this._score = score;
+            this._levelManager.setScore(this._score);
+            let levelCompletedPercent = this._score / this._levelManager.getLevelMaxScore() * 100;
+            levelCompletedPercent = levelCompletedPercent >= 100 ? 100 : levelCompletedPercent;
+            Tween.get(this._bar)
+                .to({
+                    scaleX: levelCompletedPercent
+                }, 300);
+            this._scoreText.text = this._score.toString();
+        }
     }
 
     export class GameManager {
+        private _levelManager: LevelManager = new LevelManager();
+        private _scoresBar: ScoresBar;
         private _dragon: Dragon;
         private _animals: Animal[] = [];
         private _bubbles: Bubble[] = [];
@@ -352,25 +395,21 @@ namespace BubbleGunner {
         private _isShapesLockFree: boolean = true;
 
         constructor(private _stage: Stage) {
+            this._scoresBar = new ScoresBar(this._levelManager);
+            this._scoresBar.x = 10;
+            this._scoresBar.y = 10;
 
+            this._dragon = new Dragon();
+            this._dragon.scaleX = this._dragon.scaleY = .25;
+            this._dragon.x = canvas.width / 2 - 25;
+            this._dragon.y = canvas.height - 100;
         }
 
         public start() {
             setInterval(this.handleAnimalRainInterval.bind(this), 3000);
             setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
-            // let scores = new ScoresBar(); // ToDo
-            // scores.x = 100;
-            // scores.y = 50;
-            // this._stage.addChild(scores);
-
-            this._dragon = new Dragon();
-            this._dragon.scaleX = this._dragon.scaleY = .25;
-            this._dragon.x = canvas.width / 2 - 25;
-            this._dragon.y = canvas.height - 100;
-
-            this._stage.addChild(this._dragon);
-
+            this._stage.addChild(this._scoresBar, this._dragon);
             this._stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this._stage.on(`stagemouseup`, this.handleClick, this);
             this._stage.on(`tick`, this.tick, this);
@@ -389,13 +428,30 @@ namespace BubbleGunner {
         }
 
         private handleLavaRainInterval() {
-            let lava = new Lava(this.getRandomX());
-            this.lockShapes(() => this._lavas.push(lava));
-            this._stage.addChild(lava);
-            console.debug(this._lavas);
+            let throwLava: Function = () => {
+                let lava = new Lava(this.getRandomX());
+                this.lockShapes(() => this._lavas.push(lava));
+                this._stage.addChild(lava);
+                console.debug(this._lavas);
 
-            lava.on(Lava.EventFell, () => this.removeShape(lava), this);
-            lava.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
+                lava.on(Lava.EventFell, () => this.removeShape(lava), this);
+                lava.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
+            };
+            // console.debug(`level: ${this._levelManager.currentLevel}`);
+            switch (this._levelManager.currentLevel) {
+                case 1:
+                    // no lava
+                    break;
+                case 2:
+                    throwLava();
+                    break;
+                case 3:
+                    throwLava();
+                    throwLava();
+                    break;
+                default:
+                    throw `Invalid level: ${this._levelManager.currentLevel}`;
+            }
         }
 
         private handleClick(evt: createjs.MouseEvent): void {
@@ -408,7 +464,10 @@ namespace BubbleGunner {
 
             bubble.on(Bubble.EventPopped, () => this.removeShape(bubble), this);
             bubble.on(Bubble.EventAscended, () => this.removeShape(bubble), this);
-            bubble.on(Bubble.EventRescuedAnimal, () => this.removeShape(bubble.getAnimal(), bubble), this);
+            bubble.on(Bubble.EventRescuedAnimal, () => {
+                this._scoresBar.increaseScore();
+                this.removeShape(bubble.getAnimal(), bubble);
+            }, this);
             bubble.move();
         }
 
@@ -501,10 +560,10 @@ function init() {
     window.addEventListener(`resize`, resizeCanvas, false);
     resizeCanvas();
 
-    let stage = new Stage(canvas);
+    let stage = new createjs.Stage(canvas);
     let manager = new BubbleGunner.GameManager(stage);
 
-    Ticker.addEventListener(`tick`, stage);
+    createjs.Ticker.addEventListener(`tick`, stage);
     createjs.Touch.enable(stage);
     manager.start();
 }

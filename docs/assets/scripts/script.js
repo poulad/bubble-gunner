@@ -8,18 +8,16 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var Shape = createjs.Shape;
-var Stage = createjs.Stage;
-var Ticker = createjs.Ticker;
-var Tween = createjs.Tween;
-var DisplayObject = createjs.DisplayObject;
-var Container = createjs.Container;
 var canvas;
 var BubbleGunner;
 (function (BubbleGunner) {
+    var Shape = createjs.Shape;
+    var Tween = createjs.Tween;
+    var Container = createjs.Container;
     var Text = createjs.Text;
     var Bitmap = createjs.Bitmap;
     var Ease = createjs.Ease;
+    var EventDispatcher = createjs.EventDispatcher;
     function isOfType(type) {
         return function (o) { return o instanceof type; };
     }
@@ -278,48 +276,89 @@ var BubbleGunner;
         };
         return Dragon;
     }(Container));
+    var LevelManager = (function (_super) {
+        __extends(LevelManager, _super);
+        function LevelManager() {
+            var _this = _super !== null && _super.apply(this, arguments) || this;
+            _this.currentLevel = 1;
+            return _this;
+        }
+        LevelManager.prototype.getLevelMaxScore = function (level) {
+            if (level == undefined) {
+                level = this.currentLevel;
+            }
+            return LevelManager.Level1MaxScore * level;
+        };
+        LevelManager.prototype.setScore = function (score) {
+            if (this.currentLevel < 3 && score > this.getLevelMaxScore()) {
+                this.currentLevel++;
+                this.dispatchEvent(new Event(LevelManager.EventLevelChanged));
+            }
+            // console.debug(`score => ${score}`);
+            // console.debug(`level => ${this.currentLevel}`);
+        };
+        LevelManager.EventLevelChanged = "levelChanged";
+        LevelManager.Level1MaxScore = 4;
+        return LevelManager;
+    }(EventDispatcher));
     var ScoresBar = (function (_super) {
         __extends(ScoresBar, _super);
-        function ScoresBar(percent) {
-            if (percent === void 0) { percent = 0; }
+        function ScoresBar(_levelManager, initialScore) {
+            if (initialScore === void 0) { initialScore = 0; }
             var _this = _super.call(this) || this;
-            var width = 300;
-            var height = 50;
+            _this._levelManager = _levelManager;
+            _this._score = initialScore;
+            var width = 200;
+            var height = 30;
             _this._bar = new Shape();
             _this._bar.graphics
                 .beginFill("yellow")
-                .drawRect(0, 0, width, height);
-            _this._bar.scaleX = percent / 100;
+                .drawRect(0, 0, 2, 5);
+            _this._bar.scaleX = 0;
             _this._bar.x = 0;
             _this._bar.y = 0;
-            _this._scoreText = new Text('10', undefined, 'white');
+            _this._scoreText = new Text(_this._score.toString(), undefined, 'white');
             _this._scoreText.x = width / 2;
             _this._scoreText.y = height + 10;
             _this.addChild(_this._bar, _this._scoreText);
             return _this;
         }
+        ScoresBar.prototype.increaseScore = function () {
+            this.setScore(this._score + 1);
+        };
+        ScoresBar.prototype.setScore = function (score) {
+            this._score = score;
+            this._levelManager.setScore(this._score);
+            var levelCompletedPercent = this._score / this._levelManager.getLevelMaxScore() * 100;
+            levelCompletedPercent = levelCompletedPercent >= 100 ? 100 : levelCompletedPercent;
+            Tween.get(this._bar)
+                .to({
+                scaleX: levelCompletedPercent
+            }, 300);
+            this._scoreText.text = this._score.toString();
+        };
         return ScoresBar;
     }(Container));
     var GameManager = (function () {
         function GameManager(_stage) {
             this._stage = _stage;
+            this._levelManager = new LevelManager();
             this._animals = [];
             this._bubbles = [];
             this._lavas = [];
             this._isShapesLockFree = true;
-        }
-        GameManager.prototype.start = function () {
-            setInterval(this.handleAnimalRainInterval.bind(this), 3000);
-            setInterval(this.handleLavaRainInterval.bind(this), 4000);
-            // let scores = new ScoresBar(); // ToDo
-            // scores.x = 100;
-            // scores.y = 50;
-            // this._stage.addChild(scores);
+            this._scoresBar = new ScoresBar(this._levelManager);
+            this._scoresBar.x = 10;
+            this._scoresBar.y = 10;
             this._dragon = new Dragon();
             this._dragon.scaleX = this._dragon.scaleY = .25;
             this._dragon.x = canvas.width / 2 - 25;
             this._dragon.y = canvas.height - 100;
-            this._stage.addChild(this._dragon);
+        }
+        GameManager.prototype.start = function () {
+            setInterval(this.handleAnimalRainInterval.bind(this), 3000);
+            setInterval(this.handleLavaRainInterval.bind(this), 4000);
+            this._stage.addChild(this._scoresBar, this._dragon);
             this._stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
             this._stage.on("stagemouseup", this.handleClick, this);
             this._stage.on("tick", this.tick, this);
@@ -337,12 +376,29 @@ var BubbleGunner;
         };
         GameManager.prototype.handleLavaRainInterval = function () {
             var _this = this;
-            var lava = new Lava(this.getRandomX());
-            this.lockShapes(function () { return _this._lavas.push(lava); });
-            this._stage.addChild(lava);
-            console.debug(this._lavas);
-            lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, this);
-            lava.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
+            var throwLava = function () {
+                var lava = new Lava(_this.getRandomX());
+                _this.lockShapes(function () { return _this._lavas.push(lava); });
+                _this._stage.addChild(lava);
+                console.debug(_this._lavas);
+                lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, _this);
+                lava.moveTo(new Point(_this.getRandomX(), _this.getCanvasDimensions()[1]));
+            };
+            // console.debug(`level: ${this._levelManager.currentLevel}`);
+            switch (this._levelManager.currentLevel) {
+                case 1:
+                    // no lava
+                    break;
+                case 2:
+                    throwLava();
+                    break;
+                case 3:
+                    throwLava();
+                    throwLava();
+                    break;
+                default:
+                    throw "Invalid level: " + this._levelManager.currentLevel;
+            }
         };
         GameManager.prototype.handleClick = function (evt) {
             var _this = this;
@@ -354,7 +410,10 @@ var BubbleGunner;
             console.debug(this._bubbles);
             bubble.on(Bubble.EventPopped, function () { return _this.removeShape(bubble); }, this);
             bubble.on(Bubble.EventAscended, function () { return _this.removeShape(bubble); }, this);
-            bubble.on(Bubble.EventRescuedAnimal, function () { return _this.removeShape(bubble.getAnimal(), bubble); }, this);
+            bubble.on(Bubble.EventRescuedAnimal, function () {
+                _this._scoresBar.increaseScore();
+                _this.removeShape(bubble.getAnimal(), bubble);
+            }, this);
             bubble.move();
         };
         GameManager.prototype.removeShape = function () {
@@ -445,9 +504,9 @@ function init() {
     canvas = document.getElementById("canvas");
     window.addEventListener("resize", resizeCanvas, false);
     resizeCanvas();
-    var stage = new Stage(canvas);
+    var stage = new createjs.Stage(canvas);
     var manager = new BubbleGunner.GameManager(stage);
-    Ticker.addEventListener("tick", stage);
+    createjs.Ticker.addEventListener("tick", stage);
     createjs.Touch.enable(stage);
     manager.start();
 }
