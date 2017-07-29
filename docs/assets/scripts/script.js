@@ -215,13 +215,19 @@ var BubbleGunner;
             _this._hand.x = 0;
             _this._hand.y = 170;
             _this._gun = new Bitmap("assets/images/gun.png");
-            _this._gun.x = -165;
-            _this._gun.y = 100;
+            _this._gun.regX = 379;
+            _this._gun.regY = 101.5;
+            _this._gun.x = _this._gun.regX - 165;
+            _this._gun.y = _this._gun.regY + 100;
+            _this._gunContainer = new Container();
+            _this._gunContainer.addChild(_this._gun, _this._hand);
             _this.addChild(_this._body, _this._gun, _this._hand);
             return _this;
         }
         Dragon.prototype.shootBubbleTo = function (point) {
-            var bubble = new Bubble(this.getGunMuzzlePoint(), point);
+            this.aimGunToPoint(point);
+            var bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
+            // console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
             bubble.scaleX = bubble.scaleY = .1;
             Tween.get(bubble)
                 .to({
@@ -230,10 +236,38 @@ var BubbleGunner;
             }, 150, Ease.bounceOut);
             return bubble;
         };
-        Dragon.prototype.getGunMuzzlePoint = function () {
-            var p = new Point(this.x + (this._gun.x + 70) * this.scaleX, this.y + (this._gun.y + 110) * this.scaleY);
-            console.debug("Shooting bubble from: " + p);
+        Dragon.prototype.aimGun = function (evt) {
+            this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+        };
+        Dragon.prototype.aimGunToPoint = function (targetPoint) {
+            var gunPoint = this.getGunRegStagePoint();
+            if (gunPoint.x < targetPoint.x) {
+                this.scaleX = -Math.abs(this.scaleX);
+            }
+            else {
+                this.scaleX = Math.abs(this.scaleX);
+            }
+            gunPoint = this.getGunRegStagePoint();
+            var yz = gunPoint.y - targetPoint.y;
+            var xz = gunPoint.x - targetPoint.x;
+            this._gun.rotation = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+            // console.debug(`aiming at angle: ${angle}`);
+        };
+        Dragon.prototype.getGunMuzzleStagePoint = function () {
+            var p = new Point();
+            var rotationRadians = Math.PI + this._gun.rotation * Math.PI / 180;
+            if (this.scaleX < 0) {
+                rotationRadians = 2 * Math.PI - rotationRadians;
+            }
+            var radius = this._gun.image.width * this.scaleX;
+            var center = this.getGunRegStagePoint();
+            p.x = center.x + radius * Math.cos(rotationRadians);
+            p.y = center.y + radius * Math.sin(rotationRadians);
+            // console.debug(`Gun muzzle at: ${p}`);
             return p;
+        };
+        Dragon.prototype.getGunRegStagePoint = function () {
+            return new Point(this.x + (this._gun.x) * this.scaleX, this.y + (this._gun.y) * this.scaleY);
         };
         return Dragon;
     }(Container));
@@ -279,6 +313,7 @@ var BubbleGunner;
             this._dragon.x = canvas.width / 2 - 25;
             this._dragon.y = canvas.height - 100;
             this._stage.addChild(this._dragon);
+            this._stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
             this._stage.on("stagemouseup", this.handleClick, this);
             this._stage.on("tick", this.tick, this);
         };

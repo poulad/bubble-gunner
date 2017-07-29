@@ -11,6 +11,7 @@ namespace BubbleGunner {
     import Text = createjs.Text;
     import Bitmap = createjs.Bitmap;
     import Ease = createjs.Ease;
+    import MouseEvent = createjs.MouseEvent;
 
     export function isOfType<T>(type: T) {
         return (o: any) => o instanceof (<any>type);
@@ -235,6 +236,7 @@ namespace BubbleGunner {
         private _body: Bitmap;
         private _hand: Bitmap;
         private _gun: Bitmap;
+        private _gunContainer: Container;
 
         constructor() {
             super();
@@ -245,15 +247,22 @@ namespace BubbleGunner {
             this._hand.y = 170;
 
             this._gun = new Bitmap(`assets/images/gun.png`);
-            this._gun.x = -165;
-            this._gun.y = 100;
+            this._gun.regX = 379;
+            this._gun.regY = 101.5;
+            this._gun.x = this._gun.regX - 165;
+            this._gun.y = this._gun.regY + 100;
+
+            this._gunContainer = new Container();
+            this._gunContainer.addChild(this._gun, this._hand);
 
             this.addChild(this._body, this._gun, this._hand);
         }
 
         public shootBubbleTo(point: Point): Bubble {
-            let bubble = new Bubble(this.getGunMuzzlePoint(), point);
+            this.aimGunToPoint(point);
 
+            let bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
+            // console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
             bubble.scaleX = bubble.scaleY = .1;
             Tween.get(bubble)
                 .to({
@@ -264,10 +273,48 @@ namespace BubbleGunner {
             return bubble;
         }
 
-        private getGunMuzzlePoint(): Point {
-            let p = new Point(this.x + (this._gun.x + 70) * this.scaleX, this.y + (this._gun.y + 110) * this.scaleY);
-            console.debug(`Shooting bubble from: ${p}`);
+        public aimGun(evt: MouseEvent) {
+            this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+        }
+
+        private aimGunToPoint(targetPoint: Point): void {
+            let gunPoint = this.getGunRegStagePoint();
+
+            if (gunPoint.x < targetPoint.x) {
+                this.scaleX = -Math.abs(this.scaleX);
+            } else {
+                this.scaleX = Math.abs(this.scaleX);
+            }
+
+            gunPoint = this.getGunRegStagePoint();
+
+            let yz = gunPoint.y - targetPoint.y;
+            let xz = gunPoint.x - targetPoint.x;
+            this._gun.rotation = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+            // console.debug(`aiming at angle: ${angle}`);
+        }
+
+        private getGunMuzzleStagePoint(): Point {
+            let p: Point = new Point();
+
+            let rotationRadians = Math.PI + this._gun.rotation * Math.PI / 180;
+            if (this.scaleX < 0) {
+                rotationRadians = 2 * Math.PI - rotationRadians;
+            }
+            let radius = this._gun.image.width * this.scaleX;
+            let center = this.getGunRegStagePoint();
+            p.x = center.x + radius * Math.cos(rotationRadians);
+            p.y = center.y + radius * Math.sin(rotationRadians);
+
+            // console.debug(`Gun muzzle at: ${p}`);
             return p;
+        }
+
+        private getGunRegStagePoint(): Point {
+            return new Point(
+                this.x + (this._gun.x) * this.scaleX,
+                this.y + (this._gun.y) * this.scaleY
+            );
         }
     }
 
@@ -323,6 +370,7 @@ namespace BubbleGunner {
 
             this._stage.addChild(this._dragon);
 
+            this._stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this._stage.on(`stagemouseup`, this.handleClick, this);
             this._stage.on(`tick`, this.tick, this);
         }
