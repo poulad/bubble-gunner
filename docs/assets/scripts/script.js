@@ -8,6 +8,7 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var Ticker = createjs.Ticker;
 var canvas;
 var BubbleGunner;
 (function (BubbleGunner) {
@@ -506,6 +507,7 @@ function init() {
     resizeCanvas();
     var stage = new createjs.Stage(canvas);
     var manager = new BubbleGunner.GameManager(stage);
+    createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener("tick", stage);
     createjs.Touch.enable(stage);
     manager.start();

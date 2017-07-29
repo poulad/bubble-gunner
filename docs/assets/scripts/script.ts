@@ -1,3 +1,5 @@
+import Ticker = createjs.Ticker;
+
 let canvas: HTMLCanvasElement;
 
 namespace BubbleGunner {
@@ -563,8 +565,10 @@ function init() {
     let stage = new createjs.Stage(canvas);
     let manager = new BubbleGunner.GameManager(stage);
 
+    createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener(`tick`, stage);
     createjs.Touch.enable(stage);
+
     manager.start();
 }
 
