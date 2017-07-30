@@ -1,8 +1,6 @@
-import Ticker = createjs.Ticker;
+import getWindowDimensions = BubbleGunner.getWindowDimensions;
 
-let canvas: HTMLCanvasElement;
-
-namespace BubbleGunner {
+namespace BubbleGunner.Game {
     import Shape = createjs.Shape;
     import Stage = createjs.Stage;
     import Tween = createjs.Tween;
@@ -84,7 +82,7 @@ namespace BubbleGunner {
 
         public continueFall(): Tween {
             Tween.removeTweens(this);
-            let newEndPoint = new Point(this.endPoint.x, canvas.height);
+            let newEndPoint = new Point(this.endPoint.x, getCanvasDimensions()[1]);
             return this.moveTo(newEndPoint);
         }
 
@@ -128,7 +126,13 @@ namespace BubbleGunner {
         }
     }
 
-    class Bubble extends Shape {
+    class Bubble extends Shape implements IResizable {
+        public scaleFactor = .5;
+        public maxScale = 1.3;
+        public minScale = .3;
+        public originalWidth = Bubble.Radius * 2;
+        public originalHeight = Bubble.Radius * 2;
+
         public static EventPopped: string = `popped`;
         public static EventAscended: string = `ascended`;
         public static EventRescuedAnimal: string = `rescued`;
@@ -140,14 +144,14 @@ namespace BubbleGunner {
 
         private _animal: Animal;
         private _pulseCount = 0;
-        private static r = 15;
+        private static Radius = 20;
 
         constructor(from: Point, to: Point) {
             super();
             this.graphics
                 .beginFill('rgba(255, 255, 255, .1)')
                 .beginStroke('rgba(255, 255, 255, .8)')
-                .drawCircle(0, 0, Bubble.r);
+                .drawCircle(0, 0, Bubble.Radius);
             this.on(`tick`, this.pulse, this);
 
             this.startPoint = from;
@@ -242,7 +246,13 @@ namespace BubbleGunner {
         }
     }
 
-    class Dragon extends Container {
+    class Dragon extends Container implements IResizable {
+        public scaleFactor = .08;
+        public maxScale = .45;
+        public minScale = .2;
+        public originalWidth = 140;
+        public originalHeight = 408;
+
         private _body: Bitmap;
         private _hand: DragonHand;
 
@@ -264,11 +274,14 @@ namespace BubbleGunner {
 
             let bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
             console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
+
+            adjustSize(bubble);
+            const targetScale = bubble.scaleX;
             bubble.scaleX = bubble.scaleY = .1;
             Tween.get(bubble)
                 .to({
-                    scaleX: 1,
-                    scaleY: 1,
+                    scaleX: targetScale,
+                    scaleY: targetScale,
                 }, 150, Ease.bounceOut);
 
             return bubble;
@@ -387,7 +400,7 @@ namespace BubbleGunner {
         }
     }
 
-    export class GameManager {
+    export class GameScene extends Container {
         private _levelManager: LevelManager = new LevelManager();
         private _scoresBar: ScoresBar;
         private _dragon: Dragon;
@@ -396,25 +409,39 @@ namespace BubbleGunner {
         private _lavas: Lava[] = [];
         private _isShapesLockFree: boolean = true;
 
-        constructor(private _stage: Stage) {
+        constructor() {
+            super();
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;
 
             this._dragon = new Dragon();
             this._dragon.scaleX = this._dragon.scaleY = .25;
-            this._dragon.x = canvas.width / 2 - 25;
-            this._dragon.y = canvas.height - 100;
+
+            this.addChild(this._scoresBar, this._dragon);
+            this.on(`tick`, this.tick, this);
         }
 
         public start() {
             setInterval(this.handleAnimalRainInterval.bind(this), 3000);
             setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
-            this._stage.addChild(this._scoresBar, this._dragon);
-            this._stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
-            this._stage.on(`stagemouseup`, this.handleClick, this);
-            this._stage.on(`tick`, this.tick, this);
+            this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
+            this.stage.on(`stagemouseup`, this.handleClick, this);
+
+            window.addEventListener(`resize`, this.positionObjects.bind(this), false);
+
+            this.positionObjects();
+        }
+
+        private positionObjects() {
+            const canvasDimensions = getCanvasDimensions();
+
+            adjustSize(this._dragon);
+            this._dragon.x = canvasDimensions[0] / 2 - this._dragon.originalWidth / 2;
+            this._dragon.y = canvasDimensions[1] - this._dragon.originalHeight * this._dragon.scaleY;
+
+            this._bubbles.forEach(b => adjustSize(b));
         }
 
         private handleAnimalRainInterval() {
@@ -422,22 +449,22 @@ namespace BubbleGunner {
             this.lockShapes(() => {
                 this._animals.push(animal);
             });
-            this._stage.addChild(animal);
+            this.addChild(animal);
             console.debug(this._animals);
 
             animal.on(Animal.EventFell, () => this.removeShape(animal), this);
-            animal.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
+            animal.moveTo(new Point(this.getRandomX(), getCanvasDimensions()[1]));
         }
 
         private handleLavaRainInterval() {
             let throwLava: Function = () => {
                 let lava = new Lava(this.getRandomX());
                 this.lockShapes(() => this._lavas.push(lava));
-                this._stage.addChild(lava);
+                this.addChild(lava);
                 console.debug(this._lavas);
 
                 lava.on(Lava.EventFell, () => this.removeShape(lava), this);
-                lava.moveTo(new Point(this.getRandomX(), this.getCanvasDimensions()[1]));
+                lava.moveTo(new Point(this.getRandomX(), getCanvasDimensions()[1]));
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
             switch (this._levelManager.currentLevel) {
@@ -461,7 +488,7 @@ namespace BubbleGunner {
             this.lockShapes(() => {
                 this._bubbles.push(bubble);
             });
-            this._stage.addChild(bubble);
+            this.addChild(bubble);
             console.debug(this._bubbles);
 
             bubble.on(Bubble.EventPopped, () => this.removeShape(bubble), this);
@@ -476,7 +503,7 @@ namespace BubbleGunner {
         private removeShape(...shapes: Shape[]): void {
             this.lockShapes(() => {
                 for (let shape of shapes) {
-                    this._stage.removeChild(shape);
+                    this.removeChild(shape);
 
                     if (shape instanceof Bubble) {
                         this._bubbles = this._bubbles
@@ -545,31 +572,28 @@ namespace BubbleGunner {
                 .filter(l => Math.sqrt(Math.pow(b.y - l.y, 2) + Math.pow(b.x - l.x, 2)) < 30)
                 .length > 0);
         }
-
-        private getCanvasDimensions(): [number, number] {
-            return [canvas.width, canvas.height];
-        }
     }
 }
 
-function resizeCanvas() {
+function resizeCanvas(canvas: HTMLCanvasElement) {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
 
 function init() {
-    canvas = <HTMLCanvasElement> document.getElementById(`canvas`);
-    window.addEventListener(`resize`, resizeCanvas, false);
-    resizeCanvas();
+    BubbleGunner.canvas = <HTMLCanvasElement> document.getElementById(`canvas`);
+    window.addEventListener(`resize`, resizeCanvas.bind(this, BubbleGunner.canvas), false);
+    resizeCanvas(BubbleGunner.canvas);
 
-    let stage = new createjs.Stage(canvas);
-    let manager = new BubbleGunner.GameManager(stage);
+    let stage = new createjs.Stage(BubbleGunner.canvas);
+    let gameScene = new BubbleGunner.Game.GameScene();
+    stage.addChild(gameScene);
 
     createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener(`tick`, stage);
     createjs.Touch.enable(stage);
 
-    manager.start();
+    gameScene.start();
 }
 
 window.addEventListener(`load`, init);
