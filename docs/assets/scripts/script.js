@@ -8,7 +8,6 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var getWindowDimensions = BubbleGunner.getWindowDimensions;
 var BubbleGunner;
 (function (BubbleGunner) {
     var Game;
@@ -28,10 +27,6 @@ var BubbleGunner;
             return function (o) { return o; };
         }
         Game.toType = toType;
-        function isCollidingWith(o) {
-            return function (other) { return findDistance(new Point(o.x, o.y), new Point(other.x, other.y)) < 30; };
-        }
-        Game.isCollidingWith = isCollidingWith;
         function hasCollisions(tuple) {
             return tuple[1].length > 0;
         }
@@ -41,7 +36,7 @@ var BubbleGunner;
         }
         Game.findDistance = findDistance;
         function getTweenDurationMSecs(p1, p2, speed) {
-            if (speed === void 0) { speed = 200; }
+            if (speed === void 0) { speed = 180; }
             return Math.floor(findDistance(p1, p2) * 1000 / speed);
         }
         Game.getTweenDurationMSecs = getTweenDurationMSecs;
@@ -62,10 +57,9 @@ var BubbleGunner;
             __extends(Animal, _super);
             function Animal(point) {
                 var _this = _super.call(this) || this;
-                var r = 15;
                 _this.graphics
                     .beginFill('lime')
-                    .drawCircle(0, 0, r);
+                    .drawCircle(0, 0, Animal.Radius);
                 _this.x = point.x;
                 _this.y = point.y;
                 _this.startPoint = point;
@@ -91,6 +85,7 @@ var BubbleGunner;
                     .call(this.dispatchEvent.bind(this, Animal.EventFell));
             };
             Animal.EventFell = "fell";
+            Animal.Radius = 18;
             return Animal;
         }(Shape));
         var Lava = (function (_super) {
@@ -99,7 +94,7 @@ var BubbleGunner;
                 var _this = _super.call(this) || this;
                 _this.graphics
                     .beginFill('red')
-                    .drawRect(0, 0, Lava.width, Lava.height);
+                    .drawRect(0, 0, Lava.Width, Lava.Height);
                 _this.startPoint = new Point(startX, 0);
                 _this.x = _this.startPoint.x;
                 _this.y = _this.startPoint.y;
@@ -117,19 +112,14 @@ var BubbleGunner;
             };
             Lava.EventFell = "fell";
             Lava.Speed = 180;
-            Lava.width = 12;
-            Lava.height = 15;
+            Lava.Width = 20;
+            Lava.Height = 18;
             return Lava;
         }(Shape));
         var Bubble = (function (_super) {
             __extends(Bubble, _super);
             function Bubble(from, to) {
                 var _this = _super.call(this) || this;
-                _this.scaleFactor = .5;
-                _this.maxScale = 1.3;
-                _this.minScale = .3;
-                _this.originalWidth = Bubble.Radius * 2;
-                _this.originalHeight = Bubble.Radius * 2;
                 _this.containsAnimal = false;
                 _this._pulseCount = 0;
                 _this.graphics
@@ -149,7 +139,7 @@ var BubbleGunner;
                     .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
-                }, getTweenDurationMSecs(this.startPoint, this.endPoint))
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Bubble.Speed))
                     .call(this.dispatchEvent.bind(this, new Event(Bubble.EventAscended)));
             };
             Bubble.prototype.takeAnimal = function (animal) {
@@ -160,7 +150,7 @@ var BubbleGunner;
                     .clear()
                     .beginFill('rgba(255, 255, 255, .1)')
                     .beginStroke('rgba(255, 255, 255, .8)')
-                    .drawCircle(0, 0, 15 + 5);
+                    .drawCircle(0, 0, Bubble.Radius);
                 this.x = this._animal.x;
                 this.y = this._animal.y;
                 Tween.removeTweens(this._animal);
@@ -208,7 +198,8 @@ var BubbleGunner;
             Bubble.EventPopped = "popped";
             Bubble.EventAscended = "ascended";
             Bubble.EventRescuedAnimal = "rescued";
-            Bubble.Radius = 20;
+            Bubble.Radius = 22;
+            Bubble.Speed = 450;
             return Bubble;
         }(Shape));
         var DragonHand = (function (_super) {
@@ -225,9 +216,6 @@ var BubbleGunner;
             __extends(Dragon, _super);
             function Dragon() {
                 var _this = _super.call(this) || this;
-                _this.scaleFactor = .08;
-                _this.maxScale = .45;
-                _this.minScale = .2;
                 _this.originalWidth = 140;
                 _this.originalHeight = 408;
                 _this._body = new Bitmap("assets/images/dragon.png");
@@ -243,7 +231,6 @@ var BubbleGunner;
                 this.aimGunToPoint(point);
                 var bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
                 console.debug("Shooting bubble from: " + this.getGunMuzzleStagePoint());
-                BubbleGunner.adjustSize(bubble);
                 var targetScale = bubble.scaleX;
                 bubble.scaleX = bubble.scaleY = .1;
                 Tween.get(bubble)
@@ -367,6 +354,8 @@ var BubbleGunner;
                 _this._scoresBar.y = 10;
                 _this._dragon = new Dragon();
                 _this._dragon.scaleX = _this._dragon.scaleY = .25;
+                _this._dragon.x = 400 - _this._dragon.originalWidth / 2;
+                _this._dragon.y = 600 - _this._dragon.originalHeight * _this._dragon.scaleY;
                 _this.addChild(_this._scoresBar, _this._dragon);
                 _this.on("tick", _this.tick, _this);
                 return _this;
@@ -376,36 +365,27 @@ var BubbleGunner;
                 setInterval(this.handleLavaRainInterval.bind(this), 4000);
                 this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
                 this.stage.on("stagemouseup", this.handleClick, this);
-                window.addEventListener("resize", this.positionObjects.bind(this), false);
-                this.positionObjects();
-            };
-            GameScene.prototype.positionObjects = function () {
-                var canvasDimensions = BubbleGunner.getCanvasDimensions();
-                BubbleGunner.adjustSize(this._dragon);
-                this._dragon.x = canvasDimensions[0] / 2 - this._dragon.originalWidth / 2;
-                this._dragon.y = canvasDimensions[1] - this._dragon.originalHeight * this._dragon.scaleY;
-                this._bubbles.forEach(function (b) { return BubbleGunner.adjustSize(b); });
             };
             GameScene.prototype.handleAnimalRainInterval = function () {
                 var _this = this;
-                var animal = new Animal(new Point(this.getRandomX(), 0));
+                var animal = new Animal(new Point(GameScene.getRandomX(), 0));
                 this.lockShapes(function () {
                     _this._animals.push(animal);
                 });
                 this.addChild(animal);
                 console.debug(this._animals);
                 animal.on(Animal.EventFell, function () { return _this.removeShape(animal); }, this);
-                animal.moveTo(new Point(this.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
+                animal.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
             };
             GameScene.prototype.handleLavaRainInterval = function () {
                 var _this = this;
                 var throwLava = function () {
-                    var lava = new Lava(_this.getRandomX());
+                    var lava = new Lava(GameScene.getRandomX());
                     _this.lockShapes(function () { return _this._lavas.push(lava); });
                     _this.addChild(lava);
                     console.debug(_this._lavas);
                     lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, _this);
-                    lava.moveTo(new Point(_this.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
+                    lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
                 };
                 // console.debug(`level: ${this._levelManager.currentLevel}`);
                 switch (this._levelManager.currentLevel) {
@@ -417,7 +397,7 @@ var BubbleGunner;
                         break;
                     case 3:
                         throwLava();
-                        throwLava();
+                        setTimeout(throwLava, 900);
                         break;
                     default:
                         throw "Invalid level: " + this._levelManager.currentLevel;
@@ -489,14 +469,14 @@ var BubbleGunner;
                         .forEach(function (tuple) { return tuple[0].takeAnimal(tuple[1]); });
                 });
             };
-            GameScene.prototype.getRandomX = function () {
+            GameScene.getRandomX = function () {
                 var x;
-                x = (Math.random() * 324627938) % BubbleGunner.canvas.width;
+                x = (Math.random() * 324627938) % BubbleGunner.getCanvasDimensions()[0];
                 return x;
             };
-            GameScene.prototype.getRandomY = function () {
+            GameScene.getRandomY = function () {
                 var y;
-                y = (Math.random() * 876372147) % BubbleGunner.canvas.height;
+                y = (Math.random() * 876372147) % BubbleGunner.getCanvasDimensions()[1];
                 return y;
             };
             GameScene.prototype.lockShapes = function (f) {
@@ -505,7 +485,13 @@ var BubbleGunner;
                 this._isShapesLockFree = true;
             };
             GameScene.prototype.findAnimalsCollidingWithBubble = function (bubble) {
-                return this._animals.filter(isCollidingWith(bubble));
+                var centersDistance = Bubble.Radius + Animal.Radius;
+                var circle1Center = new Point(bubble.x, bubble.y);
+                var isAnimalColliding = function (a) {
+                    var circle2Center = new Point(a.x, a.y);
+                    return findDistance(circle1Center, circle2Center) <= centersDistance;
+                };
+                return this._animals.filter(isAnimalColliding);
             };
             GameScene.prototype.isCollidingWithAnyLava = function (lavas) {
                 return function (b) { return (lavas
@@ -517,15 +503,32 @@ var BubbleGunner;
         Game.GameScene = GameScene;
     })(Game = BubbleGunner.Game || (BubbleGunner.Game = {}));
 })(BubbleGunner || (BubbleGunner = {}));
-function resizeCanvas(canvas) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+function resizeCanvas(canvas, stage) {
+    var widthToHeightRatio = 4 / 3;
+    var maxWidth = 1200;
+    var maxHeight = 900;
+    var normalWidth = 800;
+    var normalHeight = 600;
+    if (window.innerHeight <= window.innerWidth) {
+        canvas.height = window.innerHeight;
+        canvas.width = canvas.height * widthToHeightRatio;
+    }
+    else {
+        canvas.width = window.innerWidth;
+        canvas.height = canvas.width / widthToHeightRatio;
+    }
+    if (canvas.width > maxWidth)
+        canvas.width = maxWidth;
+    if (canvas.height > maxHeight)
+        canvas.height = maxHeight;
+    var scaleFactor = canvas.width / normalWidth;
+    stage.scaleX = stage.scaleY = scaleFactor;
 }
 function init() {
     BubbleGunner.canvas = document.getElementById("canvas");
-    window.addEventListener("resize", resizeCanvas.bind(this, BubbleGunner.canvas), false);
-    resizeCanvas(BubbleGunner.canvas);
     var stage = new createjs.Stage(BubbleGunner.canvas);
+    window.addEventListener("resize", resizeCanvas.bind(this, BubbleGunner.canvas, stage), false);
+    resizeCanvas(BubbleGunner.canvas, stage);
     var gameScene = new BubbleGunner.Game.GameScene();
     stage.addChild(gameScene);
     createjs.Ticker.framerate = 60;

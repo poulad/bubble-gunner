@@ -1,10 +1,6 @@
-import getWindowDimensions = BubbleGunner.getWindowDimensions;
-
 namespace BubbleGunner.Game {
     import Shape = createjs.Shape;
-    import Stage = createjs.Stage;
     import Tween = createjs.Tween;
-    import DisplayObject = createjs.DisplayObject;
     import Container = createjs.Container;
     import Text = createjs.Text;
     import Bitmap = createjs.Bitmap;
@@ -20,10 +16,6 @@ namespace BubbleGunner.Game {
         return (o: any) => o as T;
     }
 
-    export function isCollidingWith(o: DisplayObject) {
-        return (other: DisplayObject) => findDistance(new Point(o.x, o.y), new Point(other.x, other.y)) < 30;
-    }
-
     export function hasCollisions(tuple: [Bubble, Animal[]]): boolean {
         return tuple[1].length > 0;
     }
@@ -32,7 +24,7 @@ namespace BubbleGunner.Game {
         return Math.sqrt(Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2));
     }
 
-    export function getTweenDurationMSecs(p1: Point, p2: Point, speed: number = 200): number {
+    export function getTweenDurationMSecs(p1: Point, p2: Point, speed: number = 180): number {
         return Math.floor(findDistance(p1, p2) * 1000 / speed);
     }
 
@@ -52,6 +44,7 @@ namespace BubbleGunner.Game {
 
     class Animal extends Shape {
         public static EventFell: string = `fell`;
+        public static Radius: number = 18;
 
         public startPoint: Point;
         public endPoint: Point;
@@ -59,10 +52,10 @@ namespace BubbleGunner.Game {
 
         constructor(point: Point) {
             super();
-            const r = 15;
+
             this.graphics
                 .beginFill('lime')
-                .drawCircle(0, 0, r);
+                .drawCircle(0, 0, Animal.Radius);
 
             this.x = point.x;
             this.y = point.y;
@@ -95,19 +88,19 @@ namespace BubbleGunner.Game {
 
     class Lava extends Shape {
         public static EventFell: string = `fell`;
-        public static Speed: number = 180;
+        private static Speed: number = 180;
 
         public startPoint: Point;
         public endPoint: Point;
         public speed: number;
-        private static width = 12;
-        private static height = 15;
+        private static Width = 20;
+        private static Height = 18;
 
         constructor(startX: number) {
             super();
             this.graphics
                 .beginFill('red')
-                .drawRect(0, 0, Lava.width, Lava.height);
+                .drawRect(0, 0, Lava.Width, Lava.Height);
 
             this.startPoint = new Point(startX, 0);
             this.x = this.startPoint.x;
@@ -126,16 +119,13 @@ namespace BubbleGunner.Game {
         }
     }
 
-    class Bubble extends Shape implements IResizable {
-        public scaleFactor = .5;
-        public maxScale = 1.3;
-        public minScale = .3;
-        public originalWidth = Bubble.Radius * 2;
-        public originalHeight = Bubble.Radius * 2;
-
+    class Bubble extends Shape {
         public static EventPopped: string = `popped`;
         public static EventAscended: string = `ascended`;
         public static EventRescuedAnimal: string = `rescued`;
+        public static Radius: number = 22;
+
+        private static Speed: number = 450;
 
         public startPoint: Point;
         public endPoint: Point;
@@ -144,7 +134,6 @@ namespace BubbleGunner.Game {
 
         private _animal: Animal;
         private _pulseCount = 0;
-        private static Radius = 20;
 
         constructor(from: Point, to: Point) {
             super();
@@ -166,7 +155,7 @@ namespace BubbleGunner.Game {
                 .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
-                }, getTweenDurationMSecs(this.startPoint, this.endPoint))
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Bubble.Speed))
                 .call(this.dispatchEvent.bind(this, new Event(Bubble.EventAscended)));
         }
 
@@ -178,7 +167,7 @@ namespace BubbleGunner.Game {
                 .clear()
                 .beginFill('rgba(255, 255, 255, .1)')
                 .beginStroke('rgba(255, 255, 255, .8)')
-                .drawCircle(0, 0, 15 + 5);
+                .drawCircle(0, 0, Bubble.Radius);
             this.x = this._animal.x;
             this.y = this._animal.y;
 
@@ -246,10 +235,7 @@ namespace BubbleGunner.Game {
         }
     }
 
-    class Dragon extends Container implements IResizable {
-        public scaleFactor = .08;
-        public maxScale = .45;
-        public minScale = .2;
+    class Dragon extends Container {
         public originalWidth = 140;
         public originalHeight = 408;
 
@@ -275,7 +261,6 @@ namespace BubbleGunner.Game {
             let bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
             console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
 
-            adjustSize(bubble);
             const targetScale = bubble.scaleX;
             bubble.scaleX = bubble.scaleY = .1;
             Tween.get(bubble)
@@ -411,12 +396,15 @@ namespace BubbleGunner.Game {
 
         constructor() {
             super();
+
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;
 
             this._dragon = new Dragon();
             this._dragon.scaleX = this._dragon.scaleY = .25;
+            this._dragon.x = 400 - this._dragon.originalWidth / 2;
+            this._dragon.y = 600 - this._dragon.originalHeight * this._dragon.scaleY;
 
             this.addChild(this._scoresBar, this._dragon);
             this.on(`tick`, this.tick, this);
@@ -428,24 +416,10 @@ namespace BubbleGunner.Game {
 
             this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this.stage.on(`stagemouseup`, this.handleClick, this);
-
-            window.addEventListener(`resize`, this.positionObjects.bind(this), false);
-
-            this.positionObjects();
-        }
-
-        private positionObjects() {
-            const canvasDimensions = getCanvasDimensions();
-
-            adjustSize(this._dragon);
-            this._dragon.x = canvasDimensions[0] / 2 - this._dragon.originalWidth / 2;
-            this._dragon.y = canvasDimensions[1] - this._dragon.originalHeight * this._dragon.scaleY;
-
-            this._bubbles.forEach(b => adjustSize(b));
         }
 
         private handleAnimalRainInterval() {
-            let animal = new Animal(new Point(this.getRandomX(), 0));
+            let animal = new Animal(new Point(GameScene.getRandomX(), 0));
             this.lockShapes(() => {
                 this._animals.push(animal);
             });
@@ -453,18 +427,18 @@ namespace BubbleGunner.Game {
             console.debug(this._animals);
 
             animal.on(Animal.EventFell, () => this.removeShape(animal), this);
-            animal.moveTo(new Point(this.getRandomX(), getCanvasDimensions()[1]));
+            animal.moveTo(new Point(GameScene.getRandomX(), getCanvasDimensions()[1]));
         }
 
         private handleLavaRainInterval() {
             let throwLava: Function = () => {
-                let lava = new Lava(this.getRandomX());
+                let lava = new Lava(GameScene.getRandomX());
                 this.lockShapes(() => this._lavas.push(lava));
                 this.addChild(lava);
                 console.debug(this._lavas);
 
                 lava.on(Lava.EventFell, () => this.removeShape(lava), this);
-                lava.moveTo(new Point(this.getRandomX(), getCanvasDimensions()[1]));
+                lava.moveTo(new Point(GameScene.getRandomX(), getCanvasDimensions()[1]));
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
             switch (this._levelManager.currentLevel) {
@@ -476,7 +450,7 @@ namespace BubbleGunner.Game {
                     break;
                 case 3:
                     throwLava();
-                    throwLava();
+                    setTimeout(throwLava, 900);
                     break;
                 default:
                     throw `Invalid level: ${this._levelManager.currentLevel}`;
@@ -545,15 +519,15 @@ namespace BubbleGunner.Game {
             });
         }
 
-        private getRandomX(): number {
+        private static getRandomX(): number {
             let x: number;
-            x = (Math.random() * 324627938) % canvas.width;
+            x = (Math.random() * 324627938) % getCanvasDimensions()[0];
             return x;
         }
 
-        private getRandomY(): number {
+        private static getRandomY(): number {
             let y: number;
-            y = (Math.random() * 876372147) % canvas.height;
+            y = (Math.random() * 876372147) % getCanvasDimensions()[1];
             return y;
         }
 
@@ -564,7 +538,15 @@ namespace BubbleGunner.Game {
         }
 
         private findAnimalsCollidingWithBubble(bubble: Bubble): Animal[] {
-            return this._animals.filter(isCollidingWith(bubble));
+            const centersDistance = Bubble.Radius + Animal.Radius;
+            let circle1Center = new Point(bubble.x, bubble.y);
+
+            let isAnimalColliding = (a: Animal) => {
+                let circle2Center = new Point(a.x, a.y);
+                return findDistance(circle1Center, circle2Center) <= centersDistance;
+            };
+
+            return this._animals.filter(isAnimalColliding);
         }
 
         private isCollidingWithAnyLava(lavas: Lava[]) {
@@ -575,17 +557,37 @@ namespace BubbleGunner.Game {
     }
 }
 
-function resizeCanvas(canvas: HTMLCanvasElement) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+function resizeCanvas(canvas: HTMLCanvasElement, stage: createjs.Stage) {
+    const widthToHeightRatio = 4 / 3;
+    const maxWidth = 1200;
+    const maxHeight = 900;
+
+    const normalWidth = 800;
+    const normalHeight = 600;
+
+    if (window.innerHeight <= window.innerWidth) {
+        canvas.height = window.innerHeight;
+        canvas.width = canvas.height * widthToHeightRatio;
+    } else {
+        canvas.width = window.innerWidth;
+        canvas.height = canvas.width / widthToHeightRatio;
+    }
+
+    if (canvas.width > maxWidth) canvas.width = maxWidth;
+    if (canvas.height > maxHeight) canvas.height = maxHeight;
+
+    let scaleFactor = canvas.width / normalWidth;
+
+    stage.scaleX = stage.scaleY = scaleFactor;
 }
 
 function init() {
     BubbleGunner.canvas = <HTMLCanvasElement> document.getElementById(`canvas`);
-    window.addEventListener(`resize`, resizeCanvas.bind(this, BubbleGunner.canvas), false);
-    resizeCanvas(BubbleGunner.canvas);
-
     let stage = new createjs.Stage(BubbleGunner.canvas);
+
+    window.addEventListener(`resize`, resizeCanvas.bind(this, BubbleGunner.canvas, stage), false);
+    resizeCanvas(BubbleGunner.canvas, stage);
+
     let gameScene = new BubbleGunner.Game.GameScene();
     stage.addChild(gameScene);
 
