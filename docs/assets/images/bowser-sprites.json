@@ -1,0 +1,24 @@
+{
+  "images":["bowser-spritesheet.png"],
+  "frames":[
+    [338,443,342,431],
+    [682,432,337,447],
+    [0,443,337,437],
+    [0,0,340,442],
+    [341,0,340,435],
+    [682,0,342,431]
+  ],
+  "animations":{
+    "standing6":[0],
+    "standing1":[1],
+    "standing2":[2],
+    "standing3":[3],
+    "standing4":[4],
+    "standing5":[5],
+    "stomp":{
+      "frames":[0,1],
+      "speed":7500
+    }
+  }
+
+}

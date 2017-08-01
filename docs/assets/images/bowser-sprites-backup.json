@@ -1,0 +1,140 @@
+{
+  "frames": [
+    {
+      "filename": "standing6",
+      "frame": {
+        "x": 338,
+        "y": 443,
+        "w": 342,
+        "h": 431
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 342,
+        "h": 431
+      },
+      "sourceSize": {
+        "w": 342,
+        "h": 431
+      }
+    },
+    {
+      "filename": "standing1",
+      "frame": {
+        "x": 682,
+        "y": 432,
+        "w": 337,
+        "h": 447
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 447
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 447
+      }
+    },
+    {
+      "filename": "standing2",
+      "frame": {
+        "x": 0,
+        "y": 443,
+        "w": 337,
+        "h": 437
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 337,
+        "h": 437
+      },
+      "sourceSize": {
+        "w": 337,
+        "h": 437
+      }
+    },
+    {
+      "filename": "standing3",
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 340,
+        "h": 442
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 340,
+        "h": 442
+      },
+      "sourceSize": {
+        "w": 340,
+        "h": 442
+      }
+    },
+    {
+      "filename": "standing4",
+      "frame": {
+        "x": 341,
+        "y": 0,
+        "w": 340,
+        "h": 435
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 340,
+        "h": 435
+      },
+      "sourceSize": {
+        "w": 340,
+        "h": 435
+      }
+    },
+    {
+      "filename": "standing5",
+      "frame": {
+        "x": 682,
+        "y": 0,
+        "w": 342,
+        "h": 431
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 342,
+        "h": 431
+      },
+      "sourceSize": {
+        "w": 342,
+        "h": 431
+      }
+    }
+  ],
+  "meta": {
+    "app": "https://www.leshylabs.com/apps/sstool/",
+    "version": "Leshy SpriteSheet Tool v0.8.4",
+    "image": "bowser-spritesheet.png",
+    "size": {
+      "w": 1024,
+      "h": 880
+    },
+    "scale": 1
+  }
+}

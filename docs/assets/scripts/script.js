@@ -219,12 +219,16 @@ var BubbleGunner;
         __extends(Dragon, _super);
         function Dragon() {
             var _this = _super.call(this) || this;
-            _this._body = new Bitmap("assets/images/dragon.png");
+            // this._spritesheet = new SpriteSheet("assets/images/bowser-sprites.json");
+            // console.log(this._spritesheet);
+            // this._body = new Sprite(this._spritesheet, "stomp");
             _this._hand = new Bitmap("assets/images/dragon-hand.png");
+            console.log(_this._hand);
             _this._hand.regX = 426;
             _this._hand.regY = 110;
             _this._hand.x = 250;
             _this._hand.y = 180;
+            _this.addChild(_this._body);
             _this.addChild(_this._body, _this._hand);
             return _this;
         }

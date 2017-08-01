@@ -13,6 +13,8 @@ namespace BubbleGunner {
     import Ease = createjs.Ease;
     import MouseEvent = createjs.MouseEvent;
     import EventDispatcher = createjs.EventDispatcher;
+    import Sprite = createjs.Sprite;
+    import SpriteSheet = createjs.SpriteSheet;
 
     export function isOfType<T>(type: T) {
         return (o: any) => o instanceof (<any>type);
@@ -243,19 +245,21 @@ namespace BubbleGunner {
     }
 
     class Dragon extends Container {
-        private _body: Bitmap;
+        private _body: Sprite;
+        private _spritesheet: SpriteSheet;
         private _hand: DragonHand;
-
         constructor() {
             super();
-            this._body = new Bitmap(`assets/images/dragon.png`);
-
-            this._hand = new Bitmap(`assets/images/dragon-hand.png`);
+            // this._spritesheet = new SpriteSheet("assets/images/bowser-sprites.json");
+            // console.log(this._spritesheet);
+            // this._body = new Sprite(this._spritesheet, "stomp");
+            this._hand = new Bitmap("assets/images/dragon-hand.png");
+            console.log(this._hand);
             this._hand.regX = 426;
             this._hand.regY = 110;
             this._hand.x = 250;
             this._hand.y = 180;
-
+            this.addChild(this._body);
             this.addChild(this._body, this._hand);
         }
 
@@ -564,7 +568,6 @@ function init() {
 
     let stage = new createjs.Stage(canvas);
     let manager = new BubbleGunner.GameManager(stage);
-
     createjs.Ticker.framerate = 60;
     createjs.Ticker.addEventListener(`tick`, stage);
     createjs.Touch.enable(stage);
