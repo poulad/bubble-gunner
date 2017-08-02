@@ -36,5 +36,5 @@ namespace BubbleGunner {
         GameOver
     }
 
-    export let queue: LoadQueue;
+    export let loader: LoadQueue;
 }

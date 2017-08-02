@@ -38,21 +38,17 @@ var BubbleGunner;
                 for (var _i = 0; _i < arguments.length; _i++) {
                     args[_i] = arguments[_i];
                 }
-                BubbleGunner.queue = new LoadQueue(undefined, "assets/");
-                BubbleGunner.queue.on("progress", this.updateProgress, this);
-                BubbleGunner.queue.loadManifest([
-                    {
-                        id: "dragon",
-                        src: "images/dragon.png"
-                    },
-                    {
-                        id: "dragon-hand",
-                        src: "images/dragon-hand.png"
-                    }
+                BubbleGunner.loader = new LoadQueue(undefined, "assets/");
+                BubbleGunner.loader.on("progress", this.updateProgress, this);
+                BubbleGunner.loader.on("complete", this.changeToMenuScene, this);
+                BubbleGunner.loader.loadManifest([
+                    { id: "dragon", src: "images/dragon.png" },
+                    { id: "dragon-hand", src: "images/dragon-hand.png" },
+                    { id: "pig0", src: "images/pig_0.png" },
+                    { id: "pig1", src: "images/pig_1.png" },
                 ]);
             };
             PreloadScene.prototype.updateProgress = function (evt) {
-                var _this = this;
                 var percent = Math.floor(evt.loaded * 100);
                 var scaleFactor = (this._circle.scaleX + (percent * 10)) / 100;
                 var tween = Tween.get(this._circle)
@@ -63,14 +59,15 @@ var BubbleGunner;
                 this._text.text = percent + " %";
                 this._text.x = BubbleGunner.NormalWidth / 2 - this._text.getMeasuredWidth() / 2;
                 this._text.y = BubbleGunner.NormalHeight / 2 - this._text.getMeasuredHeight() / 2;
-                if (percent === 100) {
-                    Tween.removeTweens(this._circle);
-                    Tween.get(this._circle)
-                        .to({ scaleX: 10, scaleY: 10 }, 200)
-                        .call(function () { return setTimeout(function () {
-                        return _this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
-                    }, 400); });
-                }
+            };
+            PreloadScene.prototype.changeToMenuScene = function () {
+                var _this = this;
+                Tween.removeTweens(this._circle);
+                Tween.get(this._circle)
+                    .to({ scaleX: 10, scaleY: 10 }, 200)
+                    .call(function () { return setTimeout(function () {
+                    return _this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
+                }, 400); });
             };
             PreloadScene.Radius = 50;
             return PreloadScene;

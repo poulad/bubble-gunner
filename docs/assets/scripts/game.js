@@ -218,8 +218,8 @@ var BubbleGunner;
                 var _this = _super.call(this) || this;
                 _this.originalWidth = 140;
                 _this.originalHeight = 408;
-                _this._body = new Bitmap(BubbleGunner.queue.getResult("dragon"));
-                _this._hand = new Bitmap(BubbleGunner.queue.getResult("dragon-hand"));
+                _this._body = new Bitmap(BubbleGunner.loader.getResult("dragon"));
+                _this._hand = new Bitmap(BubbleGunner.loader.getResult("dragon-hand"));
                 _this._hand.regX = 426;
                 _this._hand.regY = 110;
                 _this._hand.x = 250;
@@ -362,9 +362,7 @@ var BubbleGunner;
                     .drawRect(0, 0, 50, 50);
                 s.x = 20;
                 s.y = 600 - 70;
-                s.on("click", function () {
-                    _this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
-                }, _this);
+                s.on("click", _this.changeGameScene, _this);
                 var pause = new Text();
                 pause.text = "Puase";
                 pause.x = 30;
@@ -380,10 +378,17 @@ var BubbleGunner;
                 for (var _i = 0; _i < arguments.length; _i++) {
                     args[_i] = arguments[_i];
                 }
-                setInterval(this.handleAnimalRainInterval.bind(this), 3000);
-                setInterval(this.handleLavaRainInterval.bind(this), 4000);
+                this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
+                this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
                 this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
                 this.stage.on("stagemouseup", this.handleClick, this);
+            };
+            GameScene.prototype.changeGameScene = function () {
+                this.removeAllChildren();
+                this._bubbles.length = this._animals.length = this._lavas.length = 0;
+                clearInterval(this._animalRainInterval);
+                clearInterval(this._lavaRainInterval);
+                this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
             };
             GameScene.prototype.handleAnimalRainInterval = function () {
                 var _this = this;

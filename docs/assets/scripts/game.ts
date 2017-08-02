@@ -244,9 +244,9 @@ namespace BubbleGunner.Game {
 
         constructor() {
             super();
-            this._body = new Bitmap(queue.getResult(`dragon`));
+            this._body = new Bitmap(loader.getResult(`dragon`));
 
-            this._hand = new Bitmap(queue.getResult(`dragon-hand`));
+            this._hand = new Bitmap(loader.getResult(`dragon-hand`));
             this._hand.regX = 426;
             this._hand.regY = 110;
             this._hand.x = 250;
@@ -393,6 +393,8 @@ namespace BubbleGunner.Game {
         private _bubbles: Bubble[] = [];
         private _lavas: Lava[] = [];
         private _isShapesLockFree: boolean = true;
+        private _animalRainInterval: number;
+        private _lavaRainInterval: number;
 
         constructor() {
             super();
@@ -412,9 +414,7 @@ namespace BubbleGunner.Game {
                 .drawRect(0, 0, 50, 50);
             s.x = 20;
             s.y = 600 - 70;
-            s.on(`click`, () => {
-                this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu));
-            }, this);
+            s.on(`click`, this.changeGameScene, this);
             let pause = new Text();
             pause.text = `Puase`;
             pause.x = 30;
@@ -427,11 +427,19 @@ namespace BubbleGunner.Game {
         }
 
         public start(...args: any[]): void {
-            setInterval(this.handleAnimalRainInterval.bind(this), 3000);
-            setInterval(this.handleLavaRainInterval.bind(this), 4000);
+            this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
+            this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
             this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this.stage.on(`stagemouseup`, this.handleClick, this);
+        }
+
+        public changeGameScene(): void {
+            this.removeAllChildren();
+            this._bubbles.length = this._animals.length = this._lavas.length = 0;
+            clearInterval(this._animalRainInterval);
+            clearInterval(this._lavaRainInterval);
+            this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu));
         }
 
         private handleAnimalRainInterval() {

@@ -29,18 +29,15 @@ namespace BubbleGunner.Menu {
         }
 
         public start(...args: any[]): void {
-            queue = new LoadQueue(undefined, `assets/`);
-            queue.on(`progress`, this.updateProgress, this);
+            loader = new LoadQueue(undefined, `assets/`);
+            loader.on(`progress`, this.updateProgress, this);
+            loader.on(`complete`, this.changeToMenuScene, this);
 
-            queue.loadManifest([
-                {
-                    id: `dragon`,
-                    src: `images/dragon.png`
-                },
-                {
-                    id: `dragon-hand`,
-                    src: `images/dragon-hand.png`
-                }
+            loader.loadManifest([
+                {id: `dragon`, src: `images/dragon.png`},
+                {id: `dragon-hand`, src: `images/dragon-hand.png`},
+                {id: `pig0`, src: `images/pig_0.png`},
+                {id: `pig1`, src: `images/pig_1.png`},
             ]);
         }
 
@@ -57,15 +54,15 @@ namespace BubbleGunner.Menu {
             this._text.text = `${percent} %`;
             this._text.x = NormalWidth / 2 - this._text.getMeasuredWidth() / 2;
             this._text.y = NormalHeight / 2 - this._text.getMeasuredHeight() / 2;
+        }
 
-            if (percent === 100) {
-                Tween.removeTweens(this._circle);
-                Tween.get(this._circle)
-                    .to({scaleX: 10, scaleY: 10}, 200)
-                    .call(() => setTimeout(() =>
-                        this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu)), 400)
-                    );
-            }
+        private changeToMenuScene() {
+            Tween.removeTweens(this._circle);
+            Tween.get(this._circle)
+                .to({scaleX: 10, scaleY: 10}, 200)
+                .call(() => setTimeout(() =>
+                    this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu)), 400)
+                );
         }
     }
 }
