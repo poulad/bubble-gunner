@@ -244,9 +244,9 @@ namespace BubbleGunner.Game {
 
         constructor() {
             super();
-            this._body = new Bitmap(`assets/images/dragon.png`);
+            this._body = new Bitmap(queue.getResult(`dragon`));
 
-            this._hand = new Bitmap(`assets/images/dragon-hand.png`);
+            this._hand = new Bitmap(queue.getResult(`dragon-hand`));
             this._hand.regX = 426;
             this._hand.regY = 110;
             this._hand.x = 250;

@@ -15,11 +15,11 @@ var BubbleGunner;
         var Shape = createjs.Shape;
         var Text = createjs.Text;
         var Tween = createjs.Tween;
+        var LoadQueue = createjs.LoadQueue;
         var PreloadScene = (function (_super) {
             __extends(PreloadScene, _super);
             function PreloadScene() {
                 var _this = _super.call(this) || this;
-                _this._percent = 0;
                 _this._circle = new Shape();
                 _this._circle.graphics
                     .setStrokeStyle(5)
@@ -38,32 +38,38 @@ var BubbleGunner;
                 for (var _i = 0; _i < arguments.length; _i++) {
                     args[_i] = arguments[_i];
                 }
-                this._intervalHandle = setInterval(this.increasePercentage.bind(this), 150);
+                BubbleGunner.queue = new LoadQueue(undefined, "assets/");
+                BubbleGunner.queue.on("progress", this.updateProgress, this);
+                BubbleGunner.queue.loadManifest([
+                    {
+                        id: "dragon",
+                        src: "images/dragon.png"
+                    },
+                    {
+                        id: "dragon-hand",
+                        src: "images/dragon-hand.png"
+                    }
+                ]);
             };
-            PreloadScene.prototype.increasePercentage = function () {
-                this._percent += Math.floor(1 + (Math.random() * 349875349) % 8);
-                if (this._percent >= 100) {
-                    this._percent = 100;
-                    clearInterval(this._intervalHandle);
-                }
-                this.updatePercentTo(this._percent);
-            };
-            PreloadScene.prototype.updatePercentTo = function (percent) {
+            PreloadScene.prototype.updateProgress = function (evt) {
                 var _this = this;
-                var maxRadius = 500;
+                var percent = Math.floor(evt.loaded * 100);
                 var scaleFactor = (this._circle.scaleX + (percent * 10)) / 100;
                 var tween = Tween.get(this._circle)
                     .to({
                     scaleX: scaleFactor,
                     scaleY: scaleFactor,
                 }, 150);
-                this._text.text = this._percent + " %";
+                this._text.text = percent + " %";
                 this._text.x = BubbleGunner.NormalWidth / 2 - this._text.getMeasuredWidth() / 2;
                 this._text.y = BubbleGunner.NormalHeight / 2 - this._text.getMeasuredHeight() / 2;
                 if (percent === 100) {
-                    tween.call(function () {
-                        return setTimeout(function () { return _this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu)); }, 300);
-                    });
+                    Tween.removeTweens(this._circle);
+                    Tween.get(this._circle)
+                        .to({ scaleX: 10, scaleY: 10 }, 200)
+                        .call(function () { return setTimeout(function () {
+                        return _this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
+                    }, 400); });
                 }
             };
             PreloadScene.Radius = 50;

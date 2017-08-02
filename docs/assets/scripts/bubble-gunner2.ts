@@ -1,6 +1,7 @@
 namespace BubbleGunner {
     import Container = createjs.Container;
     import Event = createjs.Event;
+    import LoadQueue = createjs.LoadQueue;
 
     export let canvas: HTMLCanvasElement;
     export const NormalWidth: number = 800;
@@ -34,4 +35,6 @@ namespace BubbleGunner {
         Game,
         GameOver
     }
+
+    export let queue: LoadQueue;
 }

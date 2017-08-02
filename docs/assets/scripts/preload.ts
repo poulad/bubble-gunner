@@ -2,12 +2,11 @@ namespace BubbleGunner.Menu {
     import Shape = createjs.Shape;
     import Text = createjs.Text;
     import Tween = createjs.Tween;
+    import LoadQueue = createjs.LoadQueue;
 
     export class PreloadScene extends Scene {
         private _circle: Shape;
         private _text: Text;
-        private _percent = 0;
-        private _intervalHandle: number;
 
         private static Radius: number = 50;
 
@@ -30,39 +29,42 @@ namespace BubbleGunner.Menu {
         }
 
         public start(...args: any[]): void {
-            this._intervalHandle = setInterval(this.increasePercentage.bind(this), 150);
+            queue = new LoadQueue(undefined, `assets/`);
+            queue.on(`progress`, this.updateProgress, this);
+
+            queue.loadManifest([
+                {
+                    id: `dragon`,
+                    src: `images/dragon.png`
+                },
+                {
+                    id: `dragon-hand`,
+                    src: `images/dragon-hand.png`
+                }
+            ]);
         }
 
-        private increasePercentage(): void {
-            this._percent += Math.floor(1 + (Math.random() * 349875349) % 8);
-
-            if (this._percent >= 100) {
-                this._percent = 100;
-                clearInterval(this._intervalHandle);
-            }
-
-            this.updatePercentTo(this._percent);
-        }
-
-        private updatePercentTo(percent: number) {
-            const maxRadius = 500;
-
+        private updateProgress(evt: ProgressEvent): void {
+            let percent = Math.floor(evt.loaded * 100);
             let scaleFactor = (this._circle.scaleX + (percent * 10)) / 100;
+
             const tween: Tween = Tween.get(this._circle)
                 .to({
                     scaleX: scaleFactor,
                     scaleY: scaleFactor,
                 }, 150);
 
-            this._text.text = `${this._percent} %`;
+            this._text.text = `${percent} %`;
             this._text.x = NormalWidth / 2 - this._text.getMeasuredWidth() / 2;
             this._text.y = NormalHeight / 2 - this._text.getMeasuredHeight() / 2;
 
             if (percent === 100) {
-                tween.call(() =>
-                    setTimeout(() => this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu))
-                        , 300));
-
+                Tween.removeTweens(this._circle);
+                Tween.get(this._circle)
+                    .to({scaleX: 10, scaleY: 10}, 200)
+                    .call(() => setTimeout(() =>
+                        this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu)), 400)
+                    );
             }
         }
     }
