@@ -15,6 +15,7 @@ var BubbleGunner;
     var EventDispatcher = createjs.EventDispatcher;
     var MenuScene = BubbleGunner.Menu.MenuScene;
     var GameScene = BubbleGunner.Game.GameScene;
+    var PreloadScene = BubbleGunner.Menu.PreloadScene;
     var GameManager = (function (_super) {
         __extends(GameManager, _super);
         function GameManager(_stage) {
@@ -27,7 +28,7 @@ var BubbleGunner;
             Ticker.addEventListener("tick", this._stage);
             Touch.enable(this._stage);
             this._stage.enableMouseOver(10);
-            this.startNewScene(BubbleGunner.SceneType.Menu);
+            this.startNewScene(BubbleGunner.SceneType.Preload);
         };
         GameManager.prototype.startNewScene = function (sceneType) {
             var sceneArgs = [];
@@ -46,6 +47,9 @@ var BubbleGunner;
         GameManager.createScene = function (sceneType) {
             var scene;
             switch (sceneType) {
+                case BubbleGunner.SceneType.Preload:
+                    scene = new PreloadScene();
+                    break;
                 case BubbleGunner.SceneType.Menu:
                     scene = new MenuScene();
                     break;

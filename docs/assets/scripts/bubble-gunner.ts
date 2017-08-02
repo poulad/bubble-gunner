@@ -5,6 +5,7 @@ namespace BubbleGunner {
     import Stage = createjs.Stage;
     import MenuScene = BubbleGunner.Menu.MenuScene;
     import GameScene = BubbleGunner.Game.GameScene;
+    import PreloadScene = BubbleGunner.Menu.PreloadScene;
 
 
     export class GameManager extends EventDispatcher {
@@ -20,7 +21,7 @@ namespace BubbleGunner {
             Touch.enable(this._stage);
             this._stage.enableMouseOver(10);
 
-            this.startNewScene(SceneType.Menu);
+            this.startNewScene(SceneType.Preload);
         }
 
         private startNewScene(sceneType: SceneType, ...sceneArgs: any[]): void {
@@ -39,6 +40,9 @@ namespace BubbleGunner {
         private static createScene(sceneType: SceneType): Scene {
             let scene: Scene;
             switch (sceneType) {
+                case SceneType.Preload:
+                    scene = new PreloadScene();
+                    break;
                 case SceneType.Menu:
                     scene = new MenuScene();
                     break;
