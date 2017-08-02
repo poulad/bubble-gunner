@@ -18,7 +18,7 @@ namespace BubbleGunner.Menu {
             this._btnStartGame.x = 360;
             this._btnStartGame.y = 100;
 
-            let startGameText = new Text(`Start Shooting Bubbles`, `10pt Calibri`, `red`);
+            let startGameText = new Text(`Start Game`, `10pt Calibri`, `red`);
             startGameText.x = 370;
             startGameText.y = 120;
 

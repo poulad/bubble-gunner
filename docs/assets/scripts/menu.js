@@ -27,11 +27,23 @@ var BubbleGunner;
                     .drawRect(0, 0, 120, 80);
                 _this._btnStartGame.x = 360;
                 _this._btnStartGame.y = 100;
-                var startGameText = new Text("Start Shooting Bubbles", "Sans 15pt", "red");
+                var startGameText = new Text("Start Game", "10pt Calibri", "red");
                 startGameText.x = 370;
                 startGameText.y = 120;
                 _this._btnStartGame.cursor = "pointer";
                 _this._btnStartGame.on("click", _this.dispatchStartGameEvent, _this);
+                _this._btnStartHelp = new Shape();
+                _this._btnStartHelp.graphics
+                    .beginStroke("blue")
+                    .beginFill("#eee")
+                    .drawRect(0, 0, 120, 80);
+                _this._btnStartHelp.x = 360;
+                _this._btnStartHelp.y = 200;
+                var startHelpText = new Text("Help", "20pt Calibri", "blue");
+                startHelpText.x = _this._btnStartHelp.x + startHelpText.getMeasuredWidth() / 2;
+                startHelpText.y = _this._btnStartHelp.y + startHelpText.getMeasuredHeight() / 2;
+                _this._btnStartHelp.cursor = "pointer";
+                _this._btnStartHelp.on("click", _this.dispatchStartHelpEvent, _this);
                 var data = {
                     "images": [BubbleGunner.loader.getResult("pig0"), BubbleGunner.loader.getResult("pig1")],
                     "frames": [
@@ -175,6 +187,7 @@ var BubbleGunner;
                 sprite.x = 200;
                 sprite.y = 60;
                 _this.addChild(_this._btnStartGame, startGameText, sprite);
+                _this.addChild(_this._btnStartHelp, startHelpText);
                 return _this;
             }
             MenuScene.prototype.start = function () {
@@ -185,6 +198,9 @@ var BubbleGunner;
             };
             MenuScene.prototype.dispatchStartGameEvent = function () {
                 this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Game));
+            };
+            MenuScene.prototype.dispatchStartHelpEvent = function () {
+                this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Help));
             };
             return MenuScene;
         }(BubbleGunner.Scene));
