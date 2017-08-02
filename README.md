@@ -35,6 +35,10 @@ A piece of Lava is the only obstacle and it falls down the sky in levels higher 
 
 - two pieces of lava fall every 4 seconds 
 
+### Other
+
+- Objects size is the same relative to the screen/window size  
+
 ## ToDo
 
 ### Object Scales
