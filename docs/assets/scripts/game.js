@@ -304,8 +304,9 @@ var BubbleGunner;
         }(EventDispatcher));
         var ScoresBar = (function (_super) {
             __extends(ScoresBar, _super);
-            function ScoresBar(_levelManager, initialScore) {
+            function ScoresBar(_levelManager, initialScore, livesLeft) {
                 if (initialScore === void 0) { initialScore = 0; }
+                if (livesLeft === void 0) { livesLeft = 4; }
                 var _this = _super.call(this) || this;
                 _this._levelManager = _levelManager;
                 _this._score = initialScore;
@@ -322,6 +323,13 @@ var BubbleGunner;
                 _this._scoreText.x = width / 2;
                 _this._scoreText.y = height + 10;
                 _this.addChild(_this._bar, _this._scoreText);
+                for (var i = 0; i < livesLeft; i++) {
+                    var heart = new Bitmap(BubbleGunner.loader.getResult("heart"));
+                    heart.scaleX = heart.scaleY = .3;
+                    heart.x = i * 30;
+                    heart.y = 50;
+                    _this.addChild(heart);
+                }
                 return _this;
             }
             ScoresBar.prototype.increaseScore = function () {
@@ -360,24 +368,21 @@ var BubbleGunner;
                 _this._scoresBar = new ScoresBar(_this._levelManager);
                 _this._scoresBar.x = 10;
                 _this._scoresBar.y = 10;
+                _this.addChild(_this._scoresBar);
+                _this.setChildIndex(_this._scoresBar, 3);
                 _this._dragon = new Dragon();
                 _this._dragon.scaleX = _this._dragon.scaleY = .25;
                 _this._dragon.x = 400 - _this._dragon.originalWidth / 2;
                 _this._dragon.y = 600 - _this._dragon.originalHeight * _this._dragon.scaleY;
-                var s = new Shape();
-                s.graphics
-                    .beginFill("#eee")
-                    .drawRect(0, 0, 50, 50);
-                s.x = 20;
-                s.y = 600 - 70;
-                s.on("click", _this.changeGameScene, _this);
-                var pause = new Text();
-                pause.text = "Puase";
+                _this.addChild(_this._dragon);
+                _this.setChildIndex(_this._dragon, 3);
+                var pause = new Bitmap(BubbleGunner.loader.getResult("pause"));
                 pause.x = 30;
-                pause.y = 600 - 70 + 15;
-                s.cursor = "pointer";
-                _this.addChild(s, pause);
-                _this.addChild(_this._scoresBar, _this._dragon);
+                pause.y = BubbleGunner.NormalHeight - pause.getBounds().height - 30;
+                pause.on("click", _this.changeGameScene, _this);
+                pause.cursor = "pointer";
+                _this.addChild(pause);
+                _this.setChildIndex(pause, 3);
                 _this.on("tick", _this.tick, _this);
                 return _this;
             }
@@ -405,6 +410,7 @@ var BubbleGunner;
                     _this._animals.push(animal);
                 });
                 this.addChild(animal);
+                this.setChildIndex(animal, 2);
                 console.debug(this._animals);
                 animal.on(Animal.EventFell, function () { return _this.removeShape(animal); }, this);
                 animal.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
@@ -415,6 +421,7 @@ var BubbleGunner;
                     var lava = new Lava(GameScene.getRandomX());
                     _this.lockShapes(function () { return _this._lavas.push(lava); });
                     _this.addChild(lava);
+                    _this.setChildIndex(lava, 2);
                     console.debug(_this._lavas);
                     lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, _this);
                     lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
@@ -442,6 +449,7 @@ var BubbleGunner;
                     _this._bubbles.push(bubble);
                 });
                 this.addChild(bubble);
+                this.setChildIndex(bubble, 2);
                 console.debug(this._bubbles);
                 bubble.on(Bubble.EventPopped, function () { return _this.removeShape(bubble); }, this);
                 bubble.on(Bubble.EventAscended, function () { return _this.removeShape(bubble); }, this);

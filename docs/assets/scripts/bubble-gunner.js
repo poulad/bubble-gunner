@@ -16,6 +16,7 @@ var BubbleGunner;
     var MenuScene = BubbleGunner.Menu.MenuScene;
     var GameScene = BubbleGunner.Game.GameScene;
     var PreloadScene = BubbleGunner.Menu.PreloadScene;
+    var HelpScene = BubbleGunner.Help.HelpScene;
     var GameManager = (function (_super) {
         __extends(GameManager, _super);
         function GameManager(_stage) {
@@ -52,6 +53,9 @@ var BubbleGunner;
                     break;
                 case BubbleGunner.SceneType.Menu:
                     scene = new MenuScene();
+                    break;
+                case BubbleGunner.SceneType.Help:
+                    scene = new HelpScene();
                     break;
                 case BubbleGunner.SceneType.Game:
                     scene = new GameScene();
