@@ -7,6 +7,8 @@ namespace BubbleGunner.Game {
     import Ease = createjs.Ease;
     import MouseEvent = createjs.MouseEvent;
     import EventDispatcher = createjs.EventDispatcher;
+    import Sound = createjs.Sound;
+    import AbstractSoundInstance = createjs.AbstractSoundInstance;
 
     export function isOfType<T>(type: T) {
         return (o: any) => o instanceof (<any>type);
@@ -403,6 +405,7 @@ namespace BubbleGunner.Game {
         private _isShapesLockFree: boolean = true;
         private _animalRainInterval: number;
         private _lavaRainInterval: number;
+        private _bgMusic: AbstractSoundInstance;
 
         constructor() {
             super();
@@ -447,6 +450,9 @@ namespace BubbleGunner.Game {
 
             this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this.stage.on(`stagemouseup`, this.handleClick, this);
+
+            Sound.on(`fileload`, this.playBackgroundMusic, this);
+            Sound.registerSound(`assets/sounds/bgm.mp3`, `bgm`);
         }
 
         public changeGameScene(): void {
@@ -454,6 +460,7 @@ namespace BubbleGunner.Game {
             this._bubbles.length = this._animals.length = this._lavas.length = 0;
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
+            this._bgMusic.stop();
             this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu));
         }
 
@@ -514,6 +521,12 @@ namespace BubbleGunner.Game {
                 this.removeShape(bubble.getAnimal(), bubble);
             }, this);
             bubble.move();
+        }
+
+        private playBackgroundMusic(): void {
+            this._bgMusic = Sound.play(`bgm`);
+            this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
+            this._bgMusic.volume = .5;
         }
 
         private removeShape(...shapes: Shape[]): void {

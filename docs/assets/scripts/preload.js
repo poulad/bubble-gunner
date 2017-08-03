@@ -50,6 +50,7 @@ var BubbleGunner;
                     { id: "pause", src: "images/pause.png" },
                     { id: "refresh", src: "images/refresh.png" },
                     { id: "scoresbar", src: "images/scoresbar.png" },
+                    { id: "bgm", src: "sounds/bgm.mp3" },
                 ]);
             };
             PreloadScene.prototype.updateProgress = function (evt) {

@@ -19,6 +19,7 @@ var BubbleGunner;
         var Bitmap = createjs.Bitmap;
         var Ease = createjs.Ease;
         var EventDispatcher = createjs.EventDispatcher;
+        var Sound = createjs.Sound;
         function isOfType(type) {
             return function (o) { return o instanceof type; };
         }
@@ -395,12 +396,15 @@ var BubbleGunner;
                 this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
                 this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
                 this.stage.on("stagemouseup", this.handleClick, this);
+                Sound.on("fileload", this.playBackgroundMusic, this);
+                Sound.registerSound("assets/sounds/bgm.mp3", "bgm");
             };
             GameScene.prototype.changeGameScene = function () {
                 this.removeAllChildren();
                 this._bubbles.length = this._animals.length = this._lavas.length = 0;
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
+                this._bgMusic.stop();
                 this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
             };
             GameScene.prototype.handleAnimalRainInterval = function () {
@@ -458,6 +462,11 @@ var BubbleGunner;
                     _this.removeShape(bubble.getAnimal(), bubble);
                 }, this);
                 bubble.move();
+            };
+            GameScene.prototype.playBackgroundMusic = function () {
+                this._bgMusic = Sound.play("bgm");
+                this._bgMusic.on("complete", this.playBackgroundMusic, this);
+                this._bgMusic.volume = .5;
             };
             GameScene.prototype.removeShape = function () {
                 var _this = this;
