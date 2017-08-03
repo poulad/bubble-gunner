@@ -6,7 +6,7 @@ namespace BubbleGunner {
     import MenuScene = BubbleGunner.Menu.MenuScene;
     import GameScene = BubbleGunner.Game.GameScene;
     import PreloadScene = BubbleGunner.Menu.PreloadScene;
-
+    import HelpScene = BubbleGunner.Help.HelpScene;
 
     export class GameManager extends EventDispatcher {
         private _currentScene: Scene;
@@ -45,6 +45,9 @@ namespace BubbleGunner {
                     break;
                 case SceneType.Menu:
                     scene = new MenuScene();
+                    break;
+                case SceneType.Help:
+                    scene = new HelpScene();
                     break;
                 case SceneType.Game:
                     scene = new GameScene();

@@ -346,7 +346,7 @@ namespace BubbleGunner.Game {
         private _scoreText: Text;
         private _score: number;
 
-        constructor(private _levelManager: LevelManager, initialScore: number = 0) {
+        constructor(private _levelManager: LevelManager, initialScore: number = 0, livesLeft: number = 4) {
             super();
             this._score = initialScore;
 
@@ -366,6 +366,14 @@ namespace BubbleGunner.Game {
             this._scoreText.y = height + 10;
 
             this.addChild(this._bar, this._scoreText);
+
+            for (let i = 0; i < livesLeft; i++) {
+                let heart = new Bitmap(loader.getResult(`heart`));
+                heart.scaleX = heart.scaleY = .3;
+                heart.x = i * 30;
+                heart.y = 50;
+                this.addChild(heart);
+            }
         }
 
         public increaseScore(): void {
@@ -412,27 +420,24 @@ namespace BubbleGunner.Game {
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;
+            this.addChild(this._scoresBar);
+            this.setChildIndex(this._scoresBar, 3);
 
             this._dragon = new Dragon();
             this._dragon.scaleX = this._dragon.scaleY = .25;
             this._dragon.x = 400 - this._dragon.originalWidth / 2;
             this._dragon.y = 600 - this._dragon.originalHeight * this._dragon.scaleY;
+            this.addChild(this._dragon);
+            this.setChildIndex(this._dragon, 3);
 
-            let s = new Shape();
-            s.graphics
-                .beginFill(`#eee`)
-                .drawRect(0, 0, 50, 50);
-            s.x = 20;
-            s.y = 600 - 70;
-            s.on(`click`, this.changeGameScene, this);
-            let pause = new Text();
-            pause.text = `Puase`;
+            let pause = new Bitmap(loader.getResult(`pause`));
             pause.x = 30;
-            pause.y = 600 - 70 + 15;
-            s.cursor = `pointer`;
-            this.addChild(s, pause);
+            pause.y = NormalHeight - pause.getBounds().height - 30;
+            pause.on(`click`, this.changeGameScene, this);
+            pause.cursor = `pointer`;
+            this.addChild(pause);
+            this.setChildIndex(pause, 3);
 
-            this.addChild(this._scoresBar, this._dragon);
             this.on(`tick`, this.tick, this);
         }
 
@@ -458,6 +463,7 @@ namespace BubbleGunner.Game {
                 this._animals.push(animal);
             });
             this.addChild(animal);
+            this.setChildIndex(animal, 2);
             console.debug(this._animals);
 
             animal.on(Animal.EventFell, () => this.removeShape(animal), this);
@@ -469,6 +475,7 @@ namespace BubbleGunner.Game {
                 let lava = new Lava(GameScene.getRandomX());
                 this.lockShapes(() => this._lavas.push(lava));
                 this.addChild(lava);
+                this.setChildIndex(lava, 2);
                 console.debug(this._lavas);
 
                 lava.on(Lava.EventFell, () => this.removeShape(lava), this);
@@ -497,6 +504,7 @@ namespace BubbleGunner.Game {
                 this._bubbles.push(bubble);
             });
             this.addChild(bubble);
+            this.setChildIndex(bubble, 2);
             console.debug(this._bubbles);
 
             bubble.on(Bubble.EventPopped, () => this.removeShape(bubble), this);

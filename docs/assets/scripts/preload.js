@@ -44,9 +44,12 @@ var BubbleGunner;
                 BubbleGunner.loader.loadManifest([
                     { id: "dragon", src: "images/dragon.png" },
                     { id: "dragon-hand", src: "images/dragon-hand.png" },
-                    { id: "pig0", src: "images/pig_0.png" },
-                    { id: "pig1", src: "images/pig_1.png" },
                     { id: "volcano", src: "images/volcano.png" },
+                    { id: "heart", src: "images/heart.png" },
+                    { id: "back", src: "images/back.png" },
+                    { id: "pause", src: "images/pause.png" },
+                    { id: "refresh", src: "images/refresh.png" },
+                    { id: "scoresbar", src: "images/scoresbar.png" },
                 ]);
             };
             PreloadScene.prototype.updateProgress = function (evt) {
