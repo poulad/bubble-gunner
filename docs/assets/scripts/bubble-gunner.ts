@@ -7,6 +7,7 @@ namespace BubbleGunner {
     import GameScene = BubbleGunner.Game.GameScene;
     import PreloadScene = BubbleGunner.Menu.PreloadScene;
     import HelpScene = BubbleGunner.Help.HelpScene;
+    import GameOverScene = BubbleGunner.GameOver.GameOverScene;
 
     export class GameManager extends EventDispatcher {
         private _currentScene: Scene;
@@ -51,6 +52,9 @@ namespace BubbleGunner {
                     break;
                 case SceneType.Game:
                     scene = new GameScene();
+                    break;
+                case SceneType.GameOver:
+                    scene = new GameOverScene();
                     break;
                 default:
                     throw new Error(`Scene type ${sceneType} not implemented yet`);

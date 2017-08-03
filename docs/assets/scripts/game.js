@@ -305,36 +305,47 @@ var BubbleGunner;
         }(EventDispatcher));
         var ScoresBar = (function (_super) {
             __extends(ScoresBar, _super);
-            function ScoresBar(_levelManager, initialScore, livesLeft) {
-                if (initialScore === void 0) { initialScore = 0; }
-                if (livesLeft === void 0) { livesLeft = 4; }
+            function ScoresBar(_levelManager, _score, _remainingLives) {
+                if (_score === void 0) { _score = 0; }
+                if (_remainingLives === void 0) { _remainingLives = 4; }
                 var _this = _super.call(this) || this;
                 _this._levelManager = _levelManager;
-                _this._score = initialScore;
-                var width = 200;
-                var height = 30;
+                _this._score = _score;
+                _this._remainingLives = _remainingLives;
+                _this._hearts = [];
+                var barMargin = 3;
+                _this._mask = new Bitmap(BubbleGunner.loader.getResult("scoresbar"));
+                _this.addChild(_this._mask);
+                _this.setChildIndex(_this._mask, 2);
                 _this._bar = new Shape();
                 _this._bar.graphics
                     .beginFill("yellow")
-                    .drawRect(0, 0, 2, 5);
+                    .drawRect(0, 0, .72, _this._mask.getBounds().height - barMargin * 2);
                 _this._bar.scaleX = 0;
-                _this._bar.x = 0;
-                _this._bar.y = 0;
-                _this._scoreText = new Text(_this._score.toString(), undefined, 'white');
-                _this._scoreText.x = width / 2;
-                _this._scoreText.y = height + 10;
-                _this.addChild(_this._bar, _this._scoreText);
-                for (var i = 0; i < livesLeft; i++) {
+                _this._bar.x = barMargin;
+                _this._bar.y = barMargin;
+                _this.addChild(_this._bar);
+                _this.setChildIndex(_this._bar, 1);
+                _this._scoreText = new Text(_this._score.toString(), "20px Arial", 'white');
+                _this._scoreText.x = _this._mask.getBounds().width + 10;
+                _this._scoreText.y = 0;
+                _this.addChild(_this._scoreText);
+                _this.setChildIndex(_this._scoreText, 1);
+                for (var i = 0; i < _remainingLives; i++) {
                     var heart = new Bitmap(BubbleGunner.loader.getResult("heart"));
                     heart.scaleX = heart.scaleY = .3;
-                    heart.x = i * 30;
-                    heart.y = 50;
+                    heart.x = i * 20;
+                    heart.y = _this._mask.getBounds().height + 8;
+                    _this._hearts.push(heart);
                     _this.addChild(heart);
                 }
                 return _this;
             }
             ScoresBar.prototype.increaseScore = function () {
                 this.setScore(this._score + 1);
+            };
+            ScoresBar.prototype.decreaseRemainingLives = function () {
+                this.setRemainingLives(this._remainingLives - 1);
             };
             ScoresBar.prototype.setScore = function (score) {
                 this._score = score;
@@ -347,6 +358,31 @@ var BubbleGunner;
                 }, 300);
                 this._scoreText.text = this._score.toString();
             };
+            ScoresBar.prototype.getScore = function () {
+                return this._score;
+            };
+            ScoresBar.prototype.setRemainingLives = function (n) {
+                var _this = this;
+                this._remainingLives = n;
+                this._hearts
+                    .filter(function (heart, index) { return (index + 1) > n; })
+                    .forEach(function (heart) {
+                    Tween.get(heart)
+                        .to({ alpha: 0, x: -50 }, 300)
+                        .call(function () {
+                        _this.removeChild(heart);
+                        _this._hearts.pop();
+                        console.debug("Hearts left: " + _this._hearts.length);
+                        if (_this._hearts.length <= 0) {
+                            _this.dispatchEvent(new Event(ScoresBar.EventNoLifeLeft));
+                        }
+                    });
+                });
+            };
+            ScoresBar.prototype.getRemainingLives = function () {
+                return this._remainingLives;
+            };
+            ScoresBar.EventNoLifeLeft = "noLifeLeft";
             return ScoresBar;
         }(Container));
         var GameScene = (function (_super) {
@@ -369,6 +405,7 @@ var BubbleGunner;
                 _this._scoresBar = new ScoresBar(_this._levelManager);
                 _this._scoresBar.x = 10;
                 _this._scoresBar.y = 10;
+                _this._scoresBar.on(ScoresBar.EventNoLifeLeft, _this.changeGameScene.bind(_this, BubbleGunner.SceneType.GameOver));
                 _this.addChild(_this._scoresBar);
                 _this.setChildIndex(_this._scoresBar, 3);
                 _this._dragon = new Dragon();
@@ -380,7 +417,7 @@ var BubbleGunner;
                 var pause = new Bitmap(BubbleGunner.loader.getResult("pause"));
                 pause.x = 30;
                 pause.y = BubbleGunner.NormalHeight - pause.getBounds().height - 30;
-                pause.on("click", _this.changeGameScene, _this);
+                pause.on("click", _this.changeGameScene.bind(_this, BubbleGunner.SceneType.Menu));
                 pause.cursor = "pointer";
                 _this.addChild(pause);
                 _this.setChildIndex(pause, 3);
@@ -398,13 +435,22 @@ var BubbleGunner;
                 this.stage.on("stagemouseup", this.handleClick, this);
                 this.playBackgroundMusic();
             };
-            GameScene.prototype.changeGameScene = function () {
+            GameScene.prototype.changeGameScene = function (toScene) {
                 this.removeAllChildren();
                 this._bubbles.length = this._animals.length = this._lavas.length = 0;
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
                 this._bgMusic.stop();
-                this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
+                switch (toScene) {
+                    case BubbleGunner.SceneType.Menu:
+                        this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
+                        break;
+                    case BubbleGunner.SceneType.GameOver:
+                        this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.GameOver));
+                        break;
+                    default:
+                        throw new Error("Invalid scene type: " + toScene);
+                }
             };
             GameScene.prototype.handleAnimalRainInterval = function () {
                 var _this = this;
@@ -415,7 +461,7 @@ var BubbleGunner;
                 this.addChild(animal);
                 this.setChildIndex(animal, 2);
                 console.debug(this._animals);
-                animal.on(Animal.EventFell, function () { return _this.removeShape(animal); }, this);
+                animal.on(Animal.EventFell, this.handleAnimalFall, this);
                 animal.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
             };
             GameScene.prototype.handleLavaRainInterval = function () {
@@ -466,6 +512,11 @@ var BubbleGunner;
                 this._bgMusic = Sound.play("bgm");
                 this._bgMusic.on("complete", this.playBackgroundMusic, this);
                 this._bgMusic.volume = .5;
+            };
+            GameScene.prototype.handleAnimalFall = function (evt) {
+                var animal = evt.target;
+                this._scoresBar.decreaseRemainingLives();
+                this.removeShape(animal);
             };
             GameScene.prototype.removeShape = function () {
                 var _this = this;

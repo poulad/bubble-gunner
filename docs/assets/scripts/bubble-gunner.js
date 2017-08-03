@@ -17,6 +17,7 @@ var BubbleGunner;
     var GameScene = BubbleGunner.Game.GameScene;
     var PreloadScene = BubbleGunner.Menu.PreloadScene;
     var HelpScene = BubbleGunner.Help.HelpScene;
+    var GameOverScene = BubbleGunner.GameOver.GameOverScene;
     var GameManager = (function (_super) {
         __extends(GameManager, _super);
         function GameManager(_stage) {
@@ -59,6 +60,9 @@ var BubbleGunner;
                     break;
                 case BubbleGunner.SceneType.Game:
                     scene = new GameScene();
+                    break;
+                case BubbleGunner.SceneType.GameOver:
+                    scene = new GameOverScene();
                     break;
                 default:
                     throw new Error("Scene type " + sceneType + " not implemented yet");

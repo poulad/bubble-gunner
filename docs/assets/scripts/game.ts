@@ -344,36 +344,45 @@ namespace BubbleGunner.Game {
     }
 
     class ScoresBar extends Container {
+        public static EventNoLifeLeft: string = `noLifeLeft`;
+
+        private _mask: Bitmap;
         private _bar: Shape;
         private _scoreText: Text;
-        private _score: number;
+        private _hearts: Bitmap[] = [];
 
-        constructor(private _levelManager: LevelManager, initialScore: number = 0, livesLeft: number = 4) {
+        constructor(private _levelManager: LevelManager, private _score: number = 0, private _remainingLives: number = 4) {
             super();
-            this._score = initialScore;
 
-            const width = 200;
-            const height = 30;
+            const barMargin = 3;
+
+            this._mask = new Bitmap(loader.getResult(`scoresbar`));
+            this.addChild(this._mask);
+            this.setChildIndex(this._mask, 2);
 
             this._bar = new Shape();
             this._bar.graphics
                 .beginFill(`yellow`)
-                .drawRect(0, 0, 2, 5);
+                .drawRect(0, 0, .72, this._mask.getBounds().height - barMargin * 2);
             this._bar.scaleX = 0;
-            this._bar.x = 0;
-            this._bar.y = 0;
+            this._bar.x = barMargin;
+            this._bar.y = barMargin;
+            this.addChild(this._bar);
+            this.setChildIndex(this._bar, 1);
 
-            this._scoreText = new Text(this._score.toString(), undefined, 'white');
-            this._scoreText.x = width / 2;
-            this._scoreText.y = height + 10;
+            this._scoreText = new Text(this._score.toString(), `20px Arial`, 'white');
+            this._scoreText.x = this._mask.getBounds().width + 10;
+            this._scoreText.y = 0;
+            this.addChild(this._scoreText);
+            this.setChildIndex(this._scoreText, 1);
 
-            this.addChild(this._bar, this._scoreText);
 
-            for (let i = 0; i < livesLeft; i++) {
+            for (let i = 0; i < _remainingLives; i++) {
                 let heart = new Bitmap(loader.getResult(`heart`));
                 heart.scaleX = heart.scaleY = .3;
-                heart.x = i * 30;
-                heart.y = 50;
+                heart.x = i * 20;
+                heart.y = this._mask.getBounds().height + 8;
+                this._hearts.push(heart);
                 this.addChild(heart);
             }
         }
@@ -382,7 +391,11 @@ namespace BubbleGunner.Game {
             this.setScore(this._score + 1);
         }
 
-        private setScore(score: number): void {
+        public decreaseRemainingLives(): void {
+            this.setRemainingLives(this._remainingLives - 1);
+        }
+
+        public setScore(score: number): void {
             this._score = score;
             this._levelManager.setScore(this._score);
             let levelCompletedPercent = this._score / this._levelManager.getLevelMaxScore() * 100;
@@ -392,6 +405,32 @@ namespace BubbleGunner.Game {
                     scaleX: levelCompletedPercent
                 }, 300);
             this._scoreText.text = this._score.toString();
+        }
+
+        public getScore(): number {
+            return this._score;
+        }
+
+        public setRemainingLives(n: number): void {
+            this._remainingLives = n;
+            this._hearts
+                .filter((heart, index) => (index + 1) > n)
+                .forEach(heart => {
+                    Tween.get(heart)
+                        .to({alpha: 0, x: -50}, 300)
+                        .call(() => {
+                            this.removeChild(heart);
+                            this._hearts.pop();
+                            console.debug(`Hearts left: ${this._hearts.length}`);
+                            if (this._hearts.length <= 0) {
+                                this.dispatchEvent(new Event(ScoresBar.EventNoLifeLeft));
+                            }
+                        });
+                });
+        }
+
+        public getRemainingLives(): number {
+            return this._remainingLives;
         }
     }
 
@@ -423,6 +462,7 @@ namespace BubbleGunner.Game {
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;
+            this._scoresBar.on(ScoresBar.EventNoLifeLeft, this.changeGameScene.bind(this, SceneType.GameOver));
             this.addChild(this._scoresBar);
             this.setChildIndex(this._scoresBar, 3);
 
@@ -436,7 +476,7 @@ namespace BubbleGunner.Game {
             let pause = new Bitmap(loader.getResult(`pause`));
             pause.x = 30;
             pause.y = NormalHeight - pause.getBounds().height - 30;
-            pause.on(`click`, this.changeGameScene, this);
+            pause.on(`click`, this.changeGameScene.bind(this, SceneType.Menu));
             pause.cursor = `pointer`;
             this.addChild(pause);
             this.setChildIndex(pause, 3);
@@ -454,13 +494,23 @@ namespace BubbleGunner.Game {
             this.playBackgroundMusic();
         }
 
-        public changeGameScene(): void {
+        public changeGameScene(toScene: SceneType): void {
             this.removeAllChildren();
             this._bubbles.length = this._animals.length = this._lavas.length = 0;
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
             this._bgMusic.stop();
-            this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu));
+
+            switch (toScene) {
+                case SceneType.Menu:
+                    this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu));
+                    break;
+                case SceneType.GameOver:
+                    this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.GameOver));
+                    break;
+                default:
+                    throw new Error(`Invalid scene type: ${toScene}`);
+            }
         }
 
         private handleAnimalRainInterval() {
@@ -472,7 +522,7 @@ namespace BubbleGunner.Game {
             this.setChildIndex(animal, 2);
             console.debug(this._animals);
 
-            animal.on(Animal.EventFell, () => this.removeShape(animal), this);
+            animal.on(Animal.EventFell, this.handleAnimalFall, this);
             animal.moveTo(new Point(GameScene.getRandomX(), getCanvasDimensions()[1]));
         }
 
@@ -526,6 +576,12 @@ namespace BubbleGunner.Game {
             this._bgMusic = Sound.play(`bgm`);
             this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
             this._bgMusic.volume = .5;
+        }
+
+        private handleAnimalFall(evt: Event) {
+            let animal: Animal = evt.target as Animal;
+            this._scoresBar.decreaseRemainingLives();
+            this.removeShape(animal);
         }
 
         private removeShape(...shapes: Shape[]): void {

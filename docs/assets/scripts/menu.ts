@@ -1,8 +1,6 @@
 namespace BubbleGunner.Menu {
     import Shape = createjs.Shape;
     import Text = createjs.Text;
-    import SpriteSheet = createjs.SpriteSheet;
-    import Sprite = createjs.Sprite;
 
     export class MenuScene extends Scene {
         private _btnStartGame: Shape;
