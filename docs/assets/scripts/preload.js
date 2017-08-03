@@ -41,12 +41,14 @@ var BubbleGunner;
                 BubbleGunner.loader = new LoadQueue(undefined, "assets/");
                 BubbleGunner.loader.on("progress", this.updateProgress, this);
                 BubbleGunner.loader.on("complete", this.changeToMenuScene, this);
+                BubbleGunner.loader.installPlugin(createjs.Sound);
                 BubbleGunner.loader.loadManifest([
                     { id: "dragon", src: "images/dragon.png" },
                     { id: "dragon-hand", src: "images/dragon-hand.png" },
                     { id: "pig0", src: "images/pig_0.png" },
                     { id: "pig1", src: "images/pig_1.png" },
                     { id: "volcano", src: "images/volcano.png" },
+                    { id: "bgm", src: "sounds/bgm.mp3" }
                 ]);
             };
             PreloadScene.prototype.updateProgress = function (evt) {

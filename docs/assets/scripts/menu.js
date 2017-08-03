@@ -16,6 +16,7 @@ var BubbleGunner;
         var Text = createjs.Text;
         var SpriteSheet = createjs.SpriteSheet;
         var Sprite = createjs.Sprite;
+        var Sound = createjs.Sound;
         var MenuScene = (function (_super) {
             __extends(MenuScene, _super);
             function MenuScene() {
@@ -186,10 +187,28 @@ var BubbleGunner;
                 var sprite = new Sprite(spriteSheet, "all");
                 sprite.x = 200;
                 sprite.y = 60;
+                var sounds = [{
+                        src: "sounds/bgm.mp3", data: {
+                            audioSprite: [
+                                { id: "intro", startTime: 0, duration: 500 },
+                                { id: "loopback", startTime: 4000, duration: 145000 },
+                            ]
+                        }
+                    }
+                ];
+                Sound.on("fileload", _this.soundHandler, _this);
+                Sound.registerSound(sounds, "bgm");
                 _this.addChild(_this._btnStartGame, startGameText, sprite);
                 _this.addChild(_this._btnStartHelp, startHelpText);
                 return _this;
             }
+            MenuScene.prototype.soundHandler = function (event) {
+                this._music = Sound.play("intro");
+                this._music.on("complete", this.bgmLoop, this);
+            };
+            MenuScene.prototype.bgmLoop = function (event) {
+                this._music = Sound.play("loopback");
+            };
             MenuScene.prototype.start = function () {
                 var args = [];
                 for (var _i = 0; _i < arguments.length; _i++) {

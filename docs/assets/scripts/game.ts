@@ -88,7 +88,7 @@ namespace BubbleGunner.Game {
 
     class Lava extends Shape {
         public static EventFell: string = `fell`;
-        private static Speed: number = 180;
+        private static Speed: number = 300;
 
         public startPoint: Point;
         public endPoint: Point;
@@ -426,7 +426,7 @@ namespace BubbleGunner.Game {
             s.y = 600 - 70;
             s.on(`click`, this.changeGameScene, this);
             let pause = new Text();
-            pause.text = `Puase`;
+            pause.text = `Pause`;
             pause.x = 30;
             pause.y = 600 - 70 + 15;
             s.cursor = `pointer`;

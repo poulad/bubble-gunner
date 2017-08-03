@@ -3,13 +3,13 @@ namespace BubbleGunner.Menu {
     import Text = createjs.Text;
     import SpriteSheet = createjs.SpriteSheet;
     import Sprite = createjs.Sprite;
-
+    import Sound = createjs.Sound;
     export class MenuScene extends Scene {
         private _btnStartGame: Shape;
         private _btnStartHelp: Shape;
+        private _music;
         constructor() {
             super();
-
             this._btnStartGame = new Shape();
             this._btnStartGame.graphics
                 .beginStroke(`yellow`)
@@ -182,8 +182,29 @@ namespace BubbleGunner.Menu {
             sprite.x = 200;
             sprite.y = 60;
 
+            var sounds = [{
+                src:"sounds/bgm.mp3", data: {
+                    audioSprite: [
+                        {id:"intro", startTime:0, duration:500},
+                        {id:"loopback", startTime:4000, duration:145000},
+                    ]}
+            }
+            ];
+
+            Sound.on("fileload", this.soundHandler, this);
+            Sound.registerSound(sounds, "bgm");
+
             this.addChild(this._btnStartGame,startGameText, sprite);
             this.addChild(this._btnStartHelp, startHelpText);
+        }
+
+        private soundHandler(event) {
+            this._music = Sound.play("intro");
+            this._music.on("complete", this.bgmLoop, this);
+        }
+
+        private bgmLoop(event) {
+            this._music = Sound.play("loopback");
         }
 
         public start(...args: any[]): void {
