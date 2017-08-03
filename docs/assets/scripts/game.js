@@ -349,6 +349,14 @@ var BubbleGunner;
                 _this._bubbles = [];
                 _this._lavas = [];
                 _this._isShapesLockFree = true;
+                var bgColor = new Shape();
+                bgColor.graphics
+                    .beginFill("#222")
+                    .drawRect(0, 0, BubbleGunner.NormalWidth, BubbleGunner.NormalHeight);
+                bgColor.x = bgColor.y = 0;
+                _this.addChild(bgColor);
+                var volcano = new Bitmap(BubbleGunner.loader.getResult("volcano"));
+                _this.addChild(volcano);
                 _this._scoresBar = new ScoresBar(_this._levelManager);
                 _this._scoresBar.x = 10;
                 _this._scoresBar.y = 10;

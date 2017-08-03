@@ -399,6 +399,16 @@ namespace BubbleGunner.Game {
         constructor() {
             super();
 
+            let bgColor = new Shape();
+            bgColor.graphics
+                .beginFill(`#222`)
+                .drawRect(0, 0, NormalWidth, NormalHeight);
+            bgColor.x = bgColor.y = 0;
+            this.addChild(bgColor);
+
+            let volcano = new Bitmap(loader.getResult(`volcano`));
+            this.addChild(volcano);
+
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;

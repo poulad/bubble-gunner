@@ -46,6 +46,7 @@ var BubbleGunner;
                     { id: "dragon-hand", src: "images/dragon-hand.png" },
                     { id: "pig0", src: "images/pig_0.png" },
                     { id: "pig1", src: "images/pig_1.png" },
+                    { id: "volcano", src: "images/volcano.png" },
                 ]);
             };
             PreloadScene.prototype.updateProgress = function (evt) {
