@@ -38,7 +38,8 @@ var BubbleGunner;
                 for (var _i = 0; _i < arguments.length; _i++) {
                     args[_i] = arguments[_i];
                 }
-                BubbleGunner.loader = new LoadQueue(undefined, "assets/");
+                BubbleGunner.loader = new LoadQueue(true, "assets/");
+                BubbleGunner.loader.installPlugin(createjs.Sound);
                 BubbleGunner.loader.on("progress", this.updateProgress, this);
                 BubbleGunner.loader.on("complete", this.changeToMenuScene, this);
                 BubbleGunner.loader.loadManifest([

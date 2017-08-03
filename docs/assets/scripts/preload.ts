@@ -29,7 +29,8 @@ namespace BubbleGunner.Menu {
         }
 
         public start(...args: any[]): void {
-            loader = new LoadQueue(undefined, `assets/`);
+            loader = new LoadQueue(true, `assets/`);
+            loader.installPlugin(createjs.Sound);
             loader.on(`progress`, this.updateProgress, this);
             loader.on(`complete`, this.changeToMenuScene, this);
 

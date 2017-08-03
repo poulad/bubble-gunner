@@ -451,8 +451,7 @@ namespace BubbleGunner.Game {
             this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this.stage.on(`stagemouseup`, this.handleClick, this);
 
-            Sound.on(`fileload`, this.playBackgroundMusic, this);
-            Sound.registerSound(`assets/sounds/bgm.mp3`, `bgm`);
+            this.playBackgroundMusic();
         }
 
         public changeGameScene(): void {
