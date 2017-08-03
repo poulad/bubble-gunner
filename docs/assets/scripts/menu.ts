@@ -182,24 +182,27 @@ namespace BubbleGunner.Menu {
             sprite.x = 200;
             sprite.y = 60;
 
-            var sounds = [{
-                src:"sounds/bgm.mp3", data: {
-                    audioSprite: [
-                        {id:"intro", startTime:0, duration:500},
-                        {id:"loopback", startTime:4000, duration:145000},
-                    ]}
-            }
-            ];
+            // var sounds = [{
+            //     src:"sounds/bgm.mp3", data: {
+            //         audioSprite: [
+            //             {id:"intro", startTime:0, duration:500},
+            //             {id:"loopback", startTime:4000, duration:145000},
+            //         ]}
+            // }
+            // ];
 
             Sound.on("fileload", this.soundHandler, this);
-            Sound.registerSound(sounds, "bgm");
-
+            //Sound.registerPlugins([createjs.WebAudioPlugin]);
+            //Sound.registerSound(sounds, "bgm");
+            this._music = Sound.play("bgm");
+            this._music.volume = 0.00001;
+            this._music.pan = 0.0000001;
             this.addChild(this._btnStartGame,startGameText, sprite);
             this.addChild(this._btnStartHelp, startHelpText);
         }
 
         private soundHandler(event) {
-            this._music = Sound.play("intro");
+            this._music = Sound.play("bpm");
             this._music.on("complete", this.bgmLoop, this);
         }
 

@@ -33,6 +33,7 @@ namespace BubbleGunner.Menu {
             loader.on(`progress`, this.updateProgress, this);
             loader.on(`complete`, this.changeToMenuScene, this);
             loader.installPlugin(createjs.Sound);
+            createjs.Sound.registerPlugins([createjs.WebAudioPlugin, createjs.FlashAudioPlugin]);
             loader.loadManifest([
                 {id: `dragon`, src: `images/dragon.png`},
                 {id: `dragon-hand`, src: `images/dragon-hand.png`},

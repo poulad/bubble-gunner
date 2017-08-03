@@ -187,23 +187,26 @@ var BubbleGunner;
                 var sprite = new Sprite(spriteSheet, "all");
                 sprite.x = 200;
                 sprite.y = 60;
-                var sounds = [{
-                        src: "sounds/bgm.mp3", data: {
-                            audioSprite: [
-                                { id: "intro", startTime: 0, duration: 500 },
-                                { id: "loopback", startTime: 4000, duration: 145000 },
-                            ]
-                        }
-                    }
-                ];
+                // var sounds = [{
+                //     src:"sounds/bgm.mp3", data: {
+                //         audioSprite: [
+                //             {id:"intro", startTime:0, duration:500},
+                //             {id:"loopback", startTime:4000, duration:145000},
+                //         ]}
+                // }
+                // ];
                 Sound.on("fileload", _this.soundHandler, _this);
-                Sound.registerSound(sounds, "bgm");
+                //Sound.registerPlugins([createjs.WebAudioPlugin]);
+                //Sound.registerSound(sounds, "bgm");
+                _this._music = Sound.play("bgm");
+                _this._music.volume = 0.00001;
+                _this._music.pan = 0.0000001;
                 _this.addChild(_this._btnStartGame, startGameText, sprite);
                 _this.addChild(_this._btnStartHelp, startHelpText);
                 return _this;
             }
             MenuScene.prototype.soundHandler = function (event) {
-                this._music = Sound.play("intro");
+                this._music = Sound.play("bpm");
                 this._music.on("complete", this.bgmLoop, this);
             };
             MenuScene.prototype.bgmLoop = function (event) {

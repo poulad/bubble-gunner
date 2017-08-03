@@ -42,6 +42,7 @@ var BubbleGunner;
                 BubbleGunner.loader.on("progress", this.updateProgress, this);
                 BubbleGunner.loader.on("complete", this.changeToMenuScene, this);
                 BubbleGunner.loader.installPlugin(createjs.Sound);
+                createjs.Sound.registerPlugins([createjs.WebAudioPlugin, createjs.FlashAudioPlugin]);
                 BubbleGunner.loader.loadManifest([
                     { id: "dragon", src: "images/dragon.png" },
                     { id: "dragon-hand", src: "images/dragon-hand.png" },
