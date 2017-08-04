@@ -225,10 +225,14 @@ var BubbleGunner;
                 _this._hand.regY = 110;
                 _this._hand.x = 250;
                 _this._hand.y = 180;
+                _this._canShoot = true;
                 _this.addChild(_this._body, _this._hand);
                 return _this;
             }
             Dragon.prototype.shootBubbleTo = function (point) {
+                var _this = this;
+                if (this._canShoot == false)
+                    return;
                 this.aimGunToPoint(point);
                 var bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
                 console.debug("Shooting bubble from: " + this.getGunMuzzleStagePoint());
@@ -239,6 +243,11 @@ var BubbleGunner;
                     scaleX: targetScale,
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
+                this._canShoot = false;
+                this._timer = setInterval(function () {
+                    _this._canShoot = true;
+                    clearInterval(_this._timer);
+                }, 300);
                 return bubble;
             };
             Dragon.prototype.aimGun = function (evt) {

@@ -240,7 +240,8 @@ namespace BubbleGunner.Game {
     class Dragon extends Container {
         public originalWidth = 140;
         public originalHeight = 408;
-
+        private _canShoot: boolean;
+        private _timer;
         private _body: Bitmap;
         private _hand: DragonHand;
 
@@ -253,11 +254,14 @@ namespace BubbleGunner.Game {
             this._hand.regY = 110;
             this._hand.x = 250;
             this._hand.y = 180;
-
+            this._canShoot = true;
             this.addChild(this._body, this._hand);
         }
 
         public shootBubbleTo(point: Point): Bubble {
+            if(this._canShoot == false)
+                return;
+
             this.aimGunToPoint(point);
 
             let bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
@@ -270,7 +274,11 @@ namespace BubbleGunner.Game {
                     scaleX: targetScale,
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
-
+            this._canShoot = false;
+            this._timer = setInterval(()=> {
+                this._canShoot = true;
+                clearInterval(this._timer);
+            }, 300);
             return bubble;
         }
 
