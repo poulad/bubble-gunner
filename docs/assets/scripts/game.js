@@ -112,7 +112,7 @@ var BubbleGunner;
                     .call(function () { return _this.dispatchEvent(new Event(Lava.EventFell)); });
             };
             Lava.EventFell = "fell";
-            Lava.Speed = 180;
+            Lava.Speed = 400;
             Lava.Width = 20;
             Lava.Height = 18;
             return Lava;
@@ -511,7 +511,8 @@ var BubbleGunner;
             GameScene.prototype.playBackgroundMusic = function () {
                 this._bgMusic = Sound.play("bgm");
                 this._bgMusic.on("complete", this.playBackgroundMusic, this);
-                this._bgMusic.volume = .5;
+                this._bgMusic.volume = 100;
+                this._bgMusic.pan = .5;
             };
             GameScene.prototype.handleAnimalFall = function (evt) {
                 var animal = evt.target;

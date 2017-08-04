@@ -90,7 +90,7 @@ namespace BubbleGunner.Game {
 
     class Lava extends Shape {
         public static EventFell: string = `fell`;
-        private static Speed: number = 180;
+        private static Speed: number = 400;
 
         public startPoint: Point;
         public endPoint: Point;
@@ -575,7 +575,8 @@ namespace BubbleGunner.Game {
         private playBackgroundMusic(): void {
             this._bgMusic = Sound.play(`bgm`);
             this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
-            this._bgMusic.volume = .5;
+            this._bgMusic.volume = 100;
+            this._bgMusic.pan = .5;
         }
 
         private handleAnimalFall(evt: Event) {
