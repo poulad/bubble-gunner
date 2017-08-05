@@ -69,7 +69,7 @@ var BubbleGunner;
             };
             Animal.prototype.continueFall = function () {
                 Tween.removeTweens(this);
-                var newEndPoint = new Point(this.endPoint.x, BubbleGunner.getCanvasDimensions()[1]);
+                var newEndPoint = new Point(this.endPoint.x, BubbleGunner.NormalHeight);
                 return this.moveTo(newEndPoint);
             };
             Animal.prototype.fallCallback = function () {
@@ -468,7 +468,7 @@ var BubbleGunner;
                 this.setChildIndex(animal, 2);
                 console.debug(this._animals);
                 animal.on(Animal.EventFell, this.handleAnimalFall, this);
-                animal.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
+                animal.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.NormalHeight));
             };
             GameScene.prototype.handleLavaRainInterval = function () {
                 var _this = this;
@@ -479,7 +479,7 @@ var BubbleGunner;
                     _this.setChildIndex(lava, 2);
                     console.debug(_this._lavas);
                     lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, _this);
-                    lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
+                    lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.NormalHeight));
                 };
                 // console.debug(`level: ${this._levelManager.currentLevel}`);
                 switch (this._levelManager.currentLevel) {
@@ -579,13 +579,8 @@ var BubbleGunner;
             };
             GameScene.getRandomX = function () {
                 var x;
-                x = (Math.random() * 324627938) % BubbleGunner.getCanvasDimensions()[0];
+                x = (Math.random() * 324627938) % BubbleGunner.NormalWidth;
                 return x;
-            };
-            GameScene.getRandomY = function () {
-                var y;
-                y = (Math.random() * 876372147) % BubbleGunner.getCanvasDimensions()[1];
-                return y;
             };
             GameScene.prototype.lockShapes = function (f) {
                 this._isShapesLockFree = false;

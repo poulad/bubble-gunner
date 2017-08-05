@@ -69,7 +69,7 @@ namespace BubbleGunner.Game {
 
         public continueFall(): Tween {
             Tween.removeTweens(this);
-            let newEndPoint = new Point(this.endPoint.x, getCanvasDimensions()[1]);
+            let newEndPoint = new Point(this.endPoint.x, NormalHeight);
             return this.moveTo(newEndPoint);
         }
 
@@ -530,7 +530,7 @@ namespace BubbleGunner.Game {
             console.debug(this._animals);
 
             animal.on(Animal.EventFell, this.handleAnimalFall, this);
-            animal.moveTo(new Point(GameScene.getRandomX(), getCanvasDimensions()[1]));
+            animal.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
         }
 
         private handleLavaRainInterval() {
@@ -542,7 +542,7 @@ namespace BubbleGunner.Game {
                 console.debug(this._lavas);
 
                 lava.on(Lava.EventFell, () => this.removeShape(lava), this);
-                lava.moveTo(new Point(GameScene.getRandomX(), getCanvasDimensions()[1]));
+                lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
             switch (this._levelManager.currentLevel) {
@@ -641,14 +641,8 @@ namespace BubbleGunner.Game {
 
         private static getRandomX(): number {
             let x: number;
-            x = (Math.random() * 324627938) % getCanvasDimensions()[0];
+            x = (Math.random() * 324627938) % NormalWidth;
             return x;
-        }
-
-        private static getRandomY(): number {
-            let y: number;
-            y = (Math.random() * 876372147) % getCanvasDimensions()[1];
-            return y;
         }
 
         private lockShapes(f: Function) {

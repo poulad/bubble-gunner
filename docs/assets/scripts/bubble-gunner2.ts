@@ -7,10 +7,6 @@ namespace BubbleGunner {
     export const NormalWidth: number = 800;
     export const NormalHeight: number = 600;
 
-    export function getCanvasDimensions(): [number, number] {
-        return [canvas.width, canvas.height];
-    }
-
     export class SceneEvent extends Event {
         public startArgs: any[];
 

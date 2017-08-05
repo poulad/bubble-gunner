@@ -14,10 +14,6 @@ var BubbleGunner;
     var Event = createjs.Event;
     BubbleGunner.NormalWidth = 800;
     BubbleGunner.NormalHeight = 600;
-    function getCanvasDimensions() {
-        return [BubbleGunner.canvas.width, BubbleGunner.canvas.height];
-    }
-    BubbleGunner.getCanvasDimensions = getCanvasDimensions;
     var SceneEvent = (function (_super) {
         __extends(SceneEvent, _super);
         function SceneEvent(type, toScene) {
