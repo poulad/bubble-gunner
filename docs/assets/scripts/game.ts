@@ -240,10 +240,12 @@ namespace BubbleGunner.Game {
     class Dragon extends Container {
         public originalWidth = 140;
         public originalHeight = 408;
-        private _canShoot: boolean;
-        public _fireRateInterval;
+
+        private static FireRate: number = 300;
+
         private _body: Bitmap;
         private _hand: DragonHand;
+        private _canShoot: boolean = true;
 
         constructor() {
             super();
@@ -254,12 +256,11 @@ namespace BubbleGunner.Game {
             this._hand.regY = 110;
             this._hand.x = 250;
             this._hand.y = 180;
-            this._canShoot = true;
             this.addChild(this._body, this._hand);
         }
 
         public shootBubbleTo(point: Point): Bubble {
-            if(this._canShoot == false)
+            if (!this._canShoot)
                 return;
 
             this.aimGunToPoint(point);
@@ -275,15 +276,19 @@ namespace BubbleGunner.Game {
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
             this._canShoot = false;
-            this._fireRateInterval = setInterval(()=> {
-                this._canShoot = true;
-                clearInterval(this._fireRateInterval);
-            }, 300);
+            setTimeout(() => {
+                if (this)
+                    this._canShoot = true;
+            }, Dragon.FireRate);
             return bubble;
         }
 
-        public aimGun(evt: MouseEvent) {
+        public aimGun(evt: MouseEvent): void {
             this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+        }
+
+        public isReadyToShoot(): boolean {
+            return this._canShoot;
         }
 
         private aimGunToPoint(targetPoint: Point): void {
@@ -489,7 +494,7 @@ namespace BubbleGunner.Game {
             this.addChild(pause);
             this.setChildIndex(pause, 3);
 
-            this.on(`tick`, this.tick, this);
+            this.on(`tick`, this.handleTick, this);
         }
 
         public start(...args: any[]): void {
@@ -507,8 +512,9 @@ namespace BubbleGunner.Game {
             this._bubbles.length = this._animals.length = this._lavas.length = 0;
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
-            clearInterval(this._dragon._fireRateInterval);
             this._bgMusic.stop();
+
+            // ToDo: Clear up all events handlers, and etc
 
             switch (toScene) {
                 case SceneType.Menu:
@@ -564,6 +570,8 @@ namespace BubbleGunner.Game {
         }
 
         private handleClick(evt: createjs.MouseEvent): void {
+            if (!this._dragon.isReadyToShoot()) return;
+
             let bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
             this.lockShapes(() => {
                 this._bubbles.push(bubble);
@@ -621,7 +629,7 @@ namespace BubbleGunner.Game {
             });
         }
 
-        private tick(): void {
+        private handleTick(): void {
             if (!this._isShapesLockFree)
                 return;
 

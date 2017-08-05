@@ -219,19 +219,19 @@ var BubbleGunner;
                 var _this = _super.call(this) || this;
                 _this.originalWidth = 140;
                 _this.originalHeight = 408;
+                _this._canShoot = true;
                 _this._body = new Bitmap(BubbleGunner.loader.getResult("dragon"));
                 _this._hand = new Bitmap(BubbleGunner.loader.getResult("dragon-hand"));
                 _this._hand.regX = 426;
                 _this._hand.regY = 110;
                 _this._hand.x = 250;
                 _this._hand.y = 180;
-                _this._canShoot = true;
                 _this.addChild(_this._body, _this._hand);
                 return _this;
             }
             Dragon.prototype.shootBubbleTo = function (point) {
                 var _this = this;
-                if (this._canShoot == false)
+                if (!this._canShoot)
                     return;
                 this.aimGunToPoint(point);
                 var bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
@@ -244,14 +244,17 @@ var BubbleGunner;
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
                 this._canShoot = false;
-                this._fireRateInterval = setInterval(function () {
-                    _this._canShoot = true;
-                    clearInterval(_this._fireRateInterval);
-                }, 300);
+                setTimeout(function () {
+                    if (_this)
+                        _this._canShoot = true;
+                }, Dragon.FireRate);
                 return bubble;
             };
             Dragon.prototype.aimGun = function (evt) {
                 this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+            };
+            Dragon.prototype.isReadyToShoot = function () {
+                return this._canShoot;
             };
             Dragon.prototype.aimGunToPoint = function (targetPoint) {
                 var handRegStagePoint = this.getHandRegStagePoint();
@@ -285,6 +288,7 @@ var BubbleGunner;
                 // console.debug(`Gun muzzle at: ${p}`);
                 return p;
             };
+            Dragon.FireRate = 300;
             return Dragon;
         }(Container));
         var LevelManager = (function (_super) {
@@ -430,7 +434,7 @@ var BubbleGunner;
                 pause.cursor = "pointer";
                 _this.addChild(pause);
                 _this.setChildIndex(pause, 3);
-                _this.on("tick", _this.tick, _this);
+                _this.on("tick", _this.handleTick, _this);
                 return _this;
             }
             GameScene.prototype.start = function () {
@@ -449,8 +453,8 @@ var BubbleGunner;
                 this._bubbles.length = this._animals.length = this._lavas.length = 0;
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
-                clearInterval(this._dragon._fireRateInterval);
                 this._bgMusic.stop();
+                // ToDo: Clear up all events handlers, and etc
                 switch (toScene) {
                     case BubbleGunner.SceneType.Menu:
                         this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
@@ -503,6 +507,8 @@ var BubbleGunner;
             };
             GameScene.prototype.handleClick = function (evt) {
                 var _this = this;
+                if (!this._dragon.isReadyToShoot())
+                    return;
                 var bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
                 this.lockShapes(function () {
                     _this._bubbles.push(bubble);
@@ -563,7 +569,7 @@ var BubbleGunner;
                     }
                 });
             };
-            GameScene.prototype.tick = function () {
+            GameScene.prototype.handleTick = function () {
                 var _this = this;
                 if (!this._isShapesLockFree)
                     return;
