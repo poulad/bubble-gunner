@@ -13,7 +13,7 @@ var BubbleGunner;
     var Container = createjs.Container;
     var Event = createjs.Event;
     BubbleGunner.NormalWidth = 800;
-    BubbleGunner.NormalHeight = 600;
+    BubbleGunner.NormalHeight = 800;
     var SceneEvent = (function (_super) {
         __extends(SceneEvent, _super);
         function SceneEvent(type, toScene) {

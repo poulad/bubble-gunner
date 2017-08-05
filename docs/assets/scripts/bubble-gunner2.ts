@@ -5,7 +5,7 @@ namespace BubbleGunner {
 
     export let canvas: HTMLCanvasElement;
     export const NormalWidth: number = 800;
-    export const NormalHeight: number = 600;
+    export const NormalHeight: number = 800;
 
     export class SceneEvent extends Event {
         public startArgs: any[];

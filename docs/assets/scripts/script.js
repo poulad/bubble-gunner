@@ -1,22 +1,14 @@
 function resizeCanvas(canvas, stage) {
-    var widthToHeightRatio = 4 / 3;
-    var maxWidth = 1200;
-    var maxHeight = 900;
-    var normalWidth = 800;
-    var normalHeight = 600;
+    var max = 1200;
     if (window.innerHeight <= window.innerWidth) {
-        canvas.height = window.innerHeight;
-        canvas.width = canvas.height * widthToHeightRatio;
+        canvas.height = canvas.width = window.innerHeight;
     }
     else {
-        canvas.width = window.innerWidth;
-        canvas.height = canvas.width / widthToHeightRatio;
+        canvas.height = canvas.width = window.innerWidth;
     }
-    if (canvas.width > maxWidth)
-        canvas.width = maxWidth;
-    if (canvas.height > maxHeight)
-        canvas.height = maxHeight;
-    var scaleFactor = canvas.width / normalWidth;
+    if (canvas.width > max)
+        canvas.height = canvas.width = max;
+    var scaleFactor = canvas.width / BubbleGunner.NormalWidth;
     stage.scaleX = stage.scaleY = scaleFactor;
 }
 function init() {

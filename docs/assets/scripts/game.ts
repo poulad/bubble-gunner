@@ -39,7 +39,7 @@ namespace BubbleGunner.Game {
 
     class Animal extends Shape {
         public static EventFell: string = `fell`;
-        public static Radius: number = 18;
+        public static Radius: number = 22;
 
         public startPoint: Point;
         public endPoint: Point;
@@ -88,8 +88,8 @@ namespace BubbleGunner.Game {
         public startPoint: Point;
         public endPoint: Point;
         public speed: number;
-        private static Width = 20;
-        private static Height = 18;
+        private static Width = 25;
+        private static Height = 20;
 
         constructor(startX: number) {
             super();
@@ -118,7 +118,7 @@ namespace BubbleGunner.Game {
         public static EventPopped: string = `popped`;
         public static EventAscended: string = `ascended`;
         public static EventRescuedAnimal: string = `rescued`;
-        public static Radius: number = 22;
+        public static Radius: number = 28;
 
         private static Speed: number = 450;
 
@@ -485,9 +485,9 @@ namespace BubbleGunner.Game {
             this.setChildIndex(this._scoresBar, 3);
 
             this._dragon = new Dragon();
-            this._dragon.scaleX = this._dragon.scaleY = .25;
-            this._dragon.x = 400 - this._dragon.originalWidth / 2;
-            this._dragon.y = 600 - this._dragon.originalHeight * this._dragon.scaleY;
+            this._dragon.scaleX = this._dragon.scaleY = .3;
+            this._dragon.x = NormalWidth / 2;
+            this._dragon.y = NormalHeight - this._dragon.originalHeight * this._dragon.scaleY - 40;
             this.addChild(this._dragon);
             this.setChildIndex(this._dragon, 3);
 
