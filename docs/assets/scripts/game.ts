@@ -9,6 +9,7 @@ namespace BubbleGunner.Game {
     import EventDispatcher = createjs.EventDispatcher;
     import Sound = createjs.Sound;
     import AbstractSoundInstance = createjs.AbstractSoundInstance;
+    import Stage = createjs.Stage;
 
     export function hasCollisions(tuple: [Bubble, Animal[]]): boolean {
         return tuple[1].length > 0;
@@ -257,8 +258,9 @@ namespace BubbleGunner.Game {
 
             this.aimGunToPoint(point);
 
-            let bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
-            console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
+            let gunMuzzlePoint = this.getGunMuzzleStagePoint();
+            let bubble = new Bubble(gunMuzzlePoint, point);
+            console.debug(`Shooting bubble from: ${gunMuzzlePoint}`);
 
             const targetScale = bubble.scaleX;
             bubble.scaleX = bubble.scaleY = .1;
@@ -276,7 +278,10 @@ namespace BubbleGunner.Game {
         }
 
         public aimGun(evt: MouseEvent): void {
-            this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+            let stage = evt.target as Stage;
+            let stagePoint = new Point(evt.stageX / stage.scaleX, evt.stageY / stage.scaleY);
+            // console.debug(`Mouse on stage point: ${stagePoint}`);
+            this.aimGunToPoint(stagePoint);
         }
 
         public isReadyToShoot(): boolean {
@@ -564,7 +569,10 @@ namespace BubbleGunner.Game {
         private handleClick(evt: createjs.MouseEvent): void {
             if (!this._dragon.isReadyToShoot()) return;
 
-            let bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
+            let stagePoint = new Point(
+                evt.stageX / this.stage.scaleX,
+                evt.stageY / this.stage.scaleY);
+            let bubble = this._dragon.shootBubbleTo(stagePoint);
             this.lockShapes(() => {
                 this._bubbles.push(bubble);
             });

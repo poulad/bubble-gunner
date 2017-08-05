@@ -20,8 +20,6 @@ namespace BubbleGunner {
         public static EventChangeScene: string = `changeScene`;
 
         public abstract start(...args: any[]): void;
-
-        // public abstract finish(): void;
     }
 
     export enum SceneType {

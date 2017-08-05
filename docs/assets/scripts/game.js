@@ -226,8 +226,9 @@ var BubbleGunner;
                 if (!this._canShoot)
                     return;
                 this.aimGunToPoint(point);
-                var bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
-                console.debug("Shooting bubble from: " + this.getGunMuzzleStagePoint());
+                var gunMuzzlePoint = this.getGunMuzzleStagePoint();
+                var bubble = new Bubble(gunMuzzlePoint, point);
+                console.debug("Shooting bubble from: " + gunMuzzlePoint);
                 var targetScale = bubble.scaleX;
                 bubble.scaleX = bubble.scaleY = .1;
                 Tween.get(bubble)
@@ -243,7 +244,10 @@ var BubbleGunner;
                 return bubble;
             };
             Dragon.prototype.aimGun = function (evt) {
-                this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+                var stage = evt.target;
+                var stagePoint = new Point(evt.stageX / stage.scaleX, evt.stageY / stage.scaleY);
+                // console.debug(`Mouse on stage point: ${stagePoint}`);
+                this.aimGunToPoint(stagePoint);
             };
             Dragon.prototype.isReadyToShoot = function () {
                 return this._canShoot;
@@ -501,7 +505,8 @@ var BubbleGunner;
                 var _this = this;
                 if (!this._dragon.isReadyToShoot())
                     return;
-                var bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
+                var stagePoint = new Point(evt.stageX / this.stage.scaleX, evt.stageY / this.stage.scaleY);
+                var bubble = this._dragon.shootBubbleTo(stagePoint);
                 this.lockShapes(function () {
                     _this._bubbles.push(bubble);
                 });
