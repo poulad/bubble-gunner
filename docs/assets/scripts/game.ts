@@ -10,14 +10,6 @@ namespace BubbleGunner.Game {
     import Sound = createjs.Sound;
     import AbstractSoundInstance = createjs.AbstractSoundInstance;
 
-    export function isOfType<T>(type: T) {
-        return (o: any) => o instanceof (<any>type);
-    }
-
-    export function toType<T>() {
-        return (o: any) => o as T;
-    }
-
     export function hasCollisions(tuple: [Bubble, Animal[]]): boolean {
         return tuple[1].length > 0;
     }
@@ -623,7 +615,7 @@ namespace BubbleGunner.Game {
 
                         console.debug(this._lavas);
                     } else {
-                        console.warn(`Unkown type to remove: ${shape}`);
+                        console.warn(`Unknown type to remove: ${shape}`);
                     }
                 }
             });
@@ -639,8 +631,8 @@ namespace BubbleGunner.Game {
                     .forEach((b: Bubble) => b.pop());
 
                 this._bubbles
-                    .filter(b => !b.containsAnimal)
-                    .map(b => [b, this.findAnimalsCollidingWithBubble(b)])
+                    .filter(this.isNotCollidingWithOtherBubbles(this._bubbles))
+                    .map(b => [b, this.findAnimalsCollidingWithBubble(b, this._animals)])
                     .filter(hasCollisions)
                     .map(tuple => <[Bubble, Animal]>[tuple[0], tuple[1][0]])
                     .forEach((tuple: [Bubble, Animal]) => tuple[0].takeAnimal(tuple[1]));
@@ -665,7 +657,24 @@ namespace BubbleGunner.Game {
             this._isShapesLockFree = true;
         }
 
-        private findAnimalsCollidingWithBubble(bubble: Bubble): Animal[] {
+        private isNotCollidingWithOtherBubbles(allBubbles: Bubble[]) {
+            const centersDistance = Bubble.Radius * 2;
+
+            return (bubble: Bubble) => {
+                let circle1Center = new Point(bubble.x, bubble.y);
+                let isCollidingWithBubble = (b: Bubble) => {
+                    let circle2Center = new Point(b.x, b.y);
+                    return findDistance(circle1Center, circle2Center) <= centersDistance;
+                };
+
+                return (allBubbles
+                    .filter(b => b !== bubble)
+                    .filter(isCollidingWithBubble)
+                    .length === 0);
+            };
+        }
+
+        private findAnimalsCollidingWithBubble(bubble: Bubble, animals: Animal[]): Animal[] {
             const centersDistance = Bubble.Radius + Animal.Radius;
             let circle1Center = new Point(bubble.x, bubble.y);
 
@@ -674,7 +683,7 @@ namespace BubbleGunner.Game {
                 return findDistance(circle1Center, circle2Center) <= centersDistance;
             };
 
-            return this._animals.filter(isAnimalColliding);
+            return animals.filter(isAnimalColliding);
         }
 
         private isCollidingWithAnyLava(lavas: Lava[]) {

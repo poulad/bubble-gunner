@@ -20,14 +20,6 @@ var BubbleGunner;
         var Ease = createjs.Ease;
         var EventDispatcher = createjs.EventDispatcher;
         var Sound = createjs.Sound;
-        function isOfType(type) {
-            return function (o) { return o instanceof type; };
-        }
-        Game.isOfType = isOfType;
-        function toType() {
-            return function (o) { return o; };
-        }
-        Game.toType = toType;
         function hasCollisions(tuple) {
             return tuple[1].length > 0;
         }
@@ -560,7 +552,7 @@ var BubbleGunner;
                             console.debug(_this._lavas);
                         }
                         else {
-                            console.warn("Unkown type to remove: " + shape);
+                            console.warn("Unknown type to remove: " + shape);
                         }
                     };
                     for (var _i = 0, shapes_1 = shapes; _i < shapes_1.length; _i++) {
@@ -578,8 +570,8 @@ var BubbleGunner;
                         .filter(_this.isCollidingWithAnyLava(_this._lavas))
                         .forEach(function (b) { return b.pop(); });
                     _this._bubbles
-                        .filter(function (b) { return !b.containsAnimal; })
-                        .map(function (b) { return [b, _this.findAnimalsCollidingWithBubble(b)]; })
+                        .filter(_this.isNotCollidingWithOtherBubbles(_this._bubbles))
+                        .map(function (b) { return [b, _this.findAnimalsCollidingWithBubble(b, _this._animals)]; })
                         .filter(hasCollisions)
                         .map(function (tuple) { return [tuple[0], tuple[1][0]]; })
                         .forEach(function (tuple) { return tuple[0].takeAnimal(tuple[1]); });
@@ -600,14 +592,28 @@ var BubbleGunner;
                 f();
                 this._isShapesLockFree = true;
             };
-            GameScene.prototype.findAnimalsCollidingWithBubble = function (bubble) {
+            GameScene.prototype.isNotCollidingWithOtherBubbles = function (allBubbles) {
+                var centersDistance = Bubble.Radius * 2;
+                return function (bubble) {
+                    var circle1Center = new Point(bubble.x, bubble.y);
+                    var isCollidingWithBubble = function (b) {
+                        var circle2Center = new Point(b.x, b.y);
+                        return findDistance(circle1Center, circle2Center) <= centersDistance;
+                    };
+                    return (allBubbles
+                        .filter(function (b) { return b !== bubble; })
+                        .filter(isCollidingWithBubble)
+                        .length === 0);
+                };
+            };
+            GameScene.prototype.findAnimalsCollidingWithBubble = function (bubble, animals) {
                 var centersDistance = Bubble.Radius + Animal.Radius;
                 var circle1Center = new Point(bubble.x, bubble.y);
                 var isAnimalColliding = function (a) {
                     var circle2Center = new Point(a.x, a.y);
                     return findDistance(circle1Center, circle2Center) <= centersDistance;
                 };
-                return this._animals.filter(isAnimalColliding);
+                return animals.filter(isAnimalColliding);
             };
             GameScene.prototype.isCollidingWithAnyLava = function (lavas) {
                 return function (b) { return (lavas
