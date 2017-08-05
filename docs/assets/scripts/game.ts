@@ -448,13 +448,21 @@ namespace BubbleGunner.Game {
         private _levelManager: LevelManager = new LevelManager();
         private _scoresBar: ScoresBar;
         private _dragon: Dragon;
+        private _pauseButton: Bitmap;
+        private _bgMusic: AbstractSoundInstance;
         private _animals: Animal[] = [];
         private _bubbles: Bubble[] = [];
         private _lavas: Lava[] = [];
         private _isShapesLockFree: boolean = true;
+
         private _animalRainInterval: number;
         private _lavaRainInterval: number;
-        private _bgMusic: AbstractSoundInstance;
+        private _tickListener: Function;
+        private _mouseMoveListener: Function;
+        private _mouseUpListener: Function;
+        private _scoresBarListener: Function;
+        private _pauseButtonListener: Function;
+        private _bgMusicListener: Function;
 
         constructor() {
             super();
@@ -472,7 +480,7 @@ namespace BubbleGunner.Game {
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;
-            this._scoresBar.on(ScoresBar.EventNoLifeLeft, this.changeGameScene.bind(this, SceneType.GameOver));
+            this._scoresBarListener = this._scoresBar.on(ScoresBar.EventNoLifeLeft, this.changeGameScene.bind(this, SceneType.GameOver));
             this.addChild(this._scoresBar);
             this.setChildIndex(this._scoresBar, 3);
 
@@ -483,33 +491,42 @@ namespace BubbleGunner.Game {
             this.addChild(this._dragon);
             this.setChildIndex(this._dragon, 3);
 
-            let pause = new Bitmap(loader.getResult(`pause`));
-            pause.x = 30;
-            pause.y = NormalHeight - pause.getBounds().height - 30;
-            pause.on(`click`, this.changeGameScene.bind(this, SceneType.Menu));
-            pause.cursor = `pointer`;
-            this.addChild(pause);
-            this.setChildIndex(pause, 3);
+            this._pauseButton = new Bitmap(loader.getResult(`pause`));
+            this._pauseButton.x = 30;
+            this._pauseButton.y = NormalHeight - this._pauseButton.getBounds().height - 30;
+            this._pauseButton.cursor = `pointer`;
+            this._pauseButtonListener = this._pauseButton.on(`click`, this.changeGameScene.bind(this, SceneType.Menu));
+            this.addChild(this._pauseButton);
+            this.setChildIndex(this._pauseButton, 3);
 
-            this.on(`tick`, this.handleTick, this);
+            this._tickListener = this.on(`tick`, this.handleTick, this);
         }
 
         public start(...args: any[]): void {
             this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
             this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
-            this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
-            this.stage.on(`stagemouseup`, this.handleClick, this);
+            this._mouseMoveListener = this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
+            this._mouseUpListener = this.stage.on(`stagemouseup`, this.handleClick, this);
 
             this.playBackgroundMusic();
         }
 
         public changeGameScene(toScene: SceneType): void {
-            this.removeAllChildren();
-            this._bubbles.length = this._animals.length = this._lavas.length = 0;
+            this.off(`tick`, this._tickListener);
+            this.stage.off(`stagemousemove`, this._mouseMoveListener);
+            this.stage.off(`stagemouseup`, this._mouseUpListener);
+            this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
+            this._bgMusic.off(`complete`, this._bgMusicListener);
+            this._pauseButton.off(`click`, this._pauseButtonListener);
+
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
+
             this._bgMusic.stop();
+            this.removeAllChildren();
+
+            this._bubbles.length = this._animals.length = this._lavas.length = 0;
 
             // ToDo: Clear up all events handlers, and etc
 
@@ -591,7 +608,7 @@ namespace BubbleGunner.Game {
 
         private playBackgroundMusic(): void {
             this._bgMusic = Sound.play(`bgm`);
-            this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
+            this._bgMusicListener = this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
             this._bgMusic.volume = 100;
             this._bgMusic.pan = .5;
         }

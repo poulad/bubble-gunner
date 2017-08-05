@@ -414,7 +414,7 @@ var BubbleGunner;
                 _this._scoresBar = new ScoresBar(_this._levelManager);
                 _this._scoresBar.x = 10;
                 _this._scoresBar.y = 10;
-                _this._scoresBar.on(ScoresBar.EventNoLifeLeft, _this.changeGameScene.bind(_this, BubbleGunner.SceneType.GameOver));
+                _this._scoresBarListener = _this._scoresBar.on(ScoresBar.EventNoLifeLeft, _this.changeGameScene.bind(_this, BubbleGunner.SceneType.GameOver));
                 _this.addChild(_this._scoresBar);
                 _this.setChildIndex(_this._scoresBar, 3);
                 _this._dragon = new Dragon();
@@ -423,14 +423,14 @@ var BubbleGunner;
                 _this._dragon.y = 600 - _this._dragon.originalHeight * _this._dragon.scaleY;
                 _this.addChild(_this._dragon);
                 _this.setChildIndex(_this._dragon, 3);
-                var pause = new Bitmap(BubbleGunner.loader.getResult("pause"));
-                pause.x = 30;
-                pause.y = BubbleGunner.NormalHeight - pause.getBounds().height - 30;
-                pause.on("click", _this.changeGameScene.bind(_this, BubbleGunner.SceneType.Menu));
-                pause.cursor = "pointer";
-                _this.addChild(pause);
-                _this.setChildIndex(pause, 3);
-                _this.on("tick", _this.handleTick, _this);
+                _this._pauseButton = new Bitmap(BubbleGunner.loader.getResult("pause"));
+                _this._pauseButton.x = 30;
+                _this._pauseButton.y = BubbleGunner.NormalHeight - _this._pauseButton.getBounds().height - 30;
+                _this._pauseButton.cursor = "pointer";
+                _this._pauseButtonListener = _this._pauseButton.on("click", _this.changeGameScene.bind(_this, BubbleGunner.SceneType.Menu));
+                _this.addChild(_this._pauseButton);
+                _this.setChildIndex(_this._pauseButton, 3);
+                _this._tickListener = _this.on("tick", _this.handleTick, _this);
                 return _this;
             }
             GameScene.prototype.start = function () {
@@ -440,16 +440,22 @@ var BubbleGunner;
                 }
                 this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
                 this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
-                this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
-                this.stage.on("stagemouseup", this.handleClick, this);
+                this._mouseMoveListener = this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
+                this._mouseUpListener = this.stage.on("stagemouseup", this.handleClick, this);
                 this.playBackgroundMusic();
             };
             GameScene.prototype.changeGameScene = function (toScene) {
-                this.removeAllChildren();
-                this._bubbles.length = this._animals.length = this._lavas.length = 0;
+                this.off("tick", this._tickListener);
+                this.stage.off("stagemousemove", this._mouseMoveListener);
+                this.stage.off("stagemouseup", this._mouseUpListener);
+                this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
+                this._bgMusic.off("complete", this._bgMusicListener);
+                this._pauseButton.off("click", this._pauseButtonListener);
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
                 this._bgMusic.stop();
+                this.removeAllChildren();
+                this._bubbles.length = this._animals.length = this._lavas.length = 0;
                 // ToDo: Clear up all events handlers, and etc
                 switch (toScene) {
                     case BubbleGunner.SceneType.Menu:
@@ -523,7 +529,7 @@ var BubbleGunner;
             };
             GameScene.prototype.playBackgroundMusic = function () {
                 this._bgMusic = Sound.play("bgm");
-                this._bgMusic.on("complete", this.playBackgroundMusic, this);
+                this._bgMusicListener = this._bgMusic.on("complete", this.playBackgroundMusic, this);
                 this._bgMusic.volume = 100;
                 this._bgMusic.pan = .5;
             };
