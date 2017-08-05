@@ -244,9 +244,9 @@ var BubbleGunner;
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
                 this._canShoot = false;
-                this._timer = setInterval(function () {
+                this._fireRateInterval = setInterval(function () {
                     _this._canShoot = true;
-                    clearInterval(_this._timer);
+                    clearInterval(_this._fireRateInterval);
                 }, 300);
                 return bubble;
             };
@@ -449,6 +449,7 @@ var BubbleGunner;
                 this._bubbles.length = this._animals.length = this._lavas.length = 0;
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
+                clearInterval(this._dragon._fireRateInterval);
                 this._bgMusic.stop();
                 switch (toScene) {
                     case BubbleGunner.SceneType.Menu:

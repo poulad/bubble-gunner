@@ -241,7 +241,7 @@ namespace BubbleGunner.Game {
         public originalWidth = 140;
         public originalHeight = 408;
         private _canShoot: boolean;
-        private _timer;
+        public _fireRateInterval;
         private _body: Bitmap;
         private _hand: DragonHand;
 
@@ -275,9 +275,9 @@ namespace BubbleGunner.Game {
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
             this._canShoot = false;
-            this._timer = setInterval(()=> {
+            this._fireRateInterval = setInterval(()=> {
                 this._canShoot = true;
-                clearInterval(this._timer);
+                clearInterval(this._fireRateInterval);
             }, 300);
             return bubble;
         }
@@ -507,6 +507,7 @@ namespace BubbleGunner.Game {
             this._bubbles.length = this._animals.length = this._lavas.length = 0;
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
+            clearInterval(this._dragon._fireRateInterval);
             this._bgMusic.stop();
 
             switch (toScene) {
