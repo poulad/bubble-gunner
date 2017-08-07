@@ -136,7 +136,6 @@ namespace BubbleGunner.Game {
                 .beginFill('rgba(255, 255, 255, .1)')
                 .beginStroke('rgba(255, 255, 255, .8)')
                 .drawCircle(0, 0, Bubble.Radius);
-            this.on(`tick`, this.pulse, this);
 
             this.startPoint = from;
             this.x = this.startPoint.x;
@@ -145,6 +144,8 @@ namespace BubbleGunner.Game {
         }
 
         public move(): Tween {
+            this.on(`tick`, this.handleTick, this);
+
             this.updateEndPoint();
             return Tween.get(this)
                 .to({
@@ -184,6 +185,31 @@ namespace BubbleGunner.Game {
             return this._animal;
         }
 
+        public pop(): Tween {
+            Tween.removeTweens(this);
+
+            if (this.containsAnimal) {
+                this._animal.continueFall();
+            }
+
+            return Tween.get(this)
+                .to({
+                    alpha: 0
+                }).call(this.dispatchEvent.bind(this, new Event(Bubble.EventPopped)));
+        }
+
+        private handleTick(): void {
+            if (
+                this.x < (0 - Bubble.Radius * this.scaleX) ||
+                (NormalWidth + Bubble.Radius * this.scaleX) < this.x
+            ) {
+                // Bubble is out of the visual horizon of canvas
+                this.dispatchEvent(new Event(Bubble.EventAscended));
+            }
+
+            this.pulse();
+        }
+
         private pulse(): void {
             let alpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
             Tween.get(this)
@@ -208,19 +234,6 @@ namespace BubbleGunner.Game {
 
             this.endPoint.y = finalY;
             this.endPoint.x = (this.endPoint.y - b) / m;
-        }
-
-        public pop(): Tween {
-            Tween.removeTweens(this);
-
-            if (this.containsAnimal) {
-                this._animal.continueFall();
-            }
-
-            return Tween.get(this)
-                .to({
-                    alpha: 0
-                }).call(this.dispatchEvent.bind(this, new Event(Bubble.EventPopped)));
         }
     }
 
@@ -310,7 +323,7 @@ namespace BubbleGunner.Game {
             if (angle < minAngle) angle = minAngle;
 
             this._hand.rotation = angle;
-            console.debug(`aiming at angle: ${angle}`);
+            // console.debug(`aiming at angle: ${angle}`);
         }
 
         private getHandRegStagePoint(): Point {
