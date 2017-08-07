@@ -121,6 +121,7 @@ namespace BubbleGunner.Game {
         public static Radius: number = 28;
 
         private static Speed: number = 450;
+        private static AscendingSpeed: number = 100;
 
         public startPoint: Point;
         public endPoint: Point;
@@ -147,6 +148,7 @@ namespace BubbleGunner.Game {
             this.on(`tick`, this.handleTick, this);
 
             this.updateEndPoint();
+
             return Tween.get(this)
                 .to({
                     x: this.endPoint.x,
@@ -159,26 +161,21 @@ namespace BubbleGunner.Game {
             this._animal = animal;
             this.containsAnimal = true;
 
-            this.graphics
-                .clear()
-                .beginFill('rgba(255, 255, 255, .1)')
-                .beginStroke('rgba(255, 255, 255, .8)')
-                .drawCircle(0, 0, Bubble.Radius);
             this.x = this._animal.x;
             this.y = this._animal.y;
 
-            Tween.removeTweens(this._animal);
             Tween.removeTweens(this);
+            Tween.removeTweens(this._animal);
 
-            const targetY = -7;
-            const duration = 3500;
+            this.startPoint = new Point(this.x, this.y);
+            this.endPoint = new Point(this.x, -Animal.Radius);
 
-            let tween = Tween.get(this)
-                .to({y: targetY}, duration)
+            return Tween.get(this)
+                .to({
+                    x: this.endPoint.x,
+                    y: this.endPoint.y
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Bubble.AscendingSpeed))
                 .call(this.dispatchEvent.bind(this, new Event(Bubble.EventRescuedAnimal)));
-            tween.on(`change`, () => this._animal.y = this.y, this);
-
-            return tween;
         }
 
         public getAnimal(): Animal {
@@ -207,15 +204,16 @@ namespace BubbleGunner.Game {
                 this.dispatchEvent(new Event(Bubble.EventAscended));
             }
 
+            if (this.containsAnimal) {
+                this._animal.y = this.y;
+            }
+
             this.pulse();
         }
 
         private pulse(): void {
-            let alpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
-            Tween.get(this)
-                .to({
-                    alpha: alpha
-                }, 100);
+            let newAlpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
+            Tween.get(this).to({alpha: newAlpha});
             this._pulseCount++;
         }
 
