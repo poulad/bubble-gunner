@@ -173,10 +173,13 @@ var BubbleGunner;
                  y = mx + b
                  m = (y2 - y1) / (x2 - x1)
                  */
-                var m = (this.endPoint.y - this.startPoint.y) / (this.endPoint.x - this.startPoint.x);
-                var b = this.startPoint.y - m * this.startPoint.x;
-                this.endPoint.y = 0;
-                this.endPoint.x = -(b / m);
+                var finalY = 0; // Bubble goes up
+                if (this.endPoint.y >= this.startPoint.y)
+                    finalY = BubbleGunner.NormalHeight; // Bubble goes down
+                var m = (this.startPoint.y - this.endPoint.y) / (this.startPoint.x - this.endPoint.x);
+                var b = this.endPoint.y - m * this.endPoint.x;
+                this.endPoint.y = finalY;
+                this.endPoint.x = (this.endPoint.y - b) / m;
             };
             Bubble.prototype.pop = function () {
                 Tween.removeTweens(this);
@@ -253,6 +256,7 @@ var BubbleGunner;
                 return this._canShoot;
             };
             Dragon.prototype.aimGunToPoint = function (targetPoint) {
+                var minAngle = -10;
                 var handRegStagePoint = this.getHandRegStagePoint();
                 if (handRegStagePoint.x < targetPoint.x) {
                     this.scaleX = -Math.abs(this.scaleX);
@@ -261,12 +265,15 @@ var BubbleGunner;
                     this.scaleX = Math.abs(this.scaleX);
                 }
                 handRegStagePoint = this.getHandRegStagePoint();
-                var yz = handRegStagePoint.y - targetPoint.y;
-                var xz = handRegStagePoint.x - targetPoint.x;
-                var angle;
-                angle = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+                var yDiff = targetPoint.y - handRegStagePoint.y;
+                var xDiff = targetPoint.x - handRegStagePoint.x;
+                var angle = Math.atan(yDiff / xDiff) / Math.PI * 180;
+                if (this.scaleX < 0)
+                    angle *= -1;
+                if (angle < minAngle)
+                    angle = minAngle;
                 this._hand.rotation = angle;
-                // console.debug(`aiming at angle: ${angle}`);
+                console.debug("aiming at angle: " + angle);
             };
             Dragon.prototype.getHandRegStagePoint = function () {
                 return new Point(this.x + this._hand.x * this.scaleX, this.y + this._hand.y * this.scaleY);

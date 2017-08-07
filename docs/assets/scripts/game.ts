@@ -200,11 +200,14 @@ namespace BubbleGunner.Game {
              m = (y2 - y1) / (x2 - x1)
              */
 
-            let m = (this.endPoint.y - this.startPoint.y) / (this.endPoint.x - this.startPoint.x);
-            let b = this.startPoint.y - m * this.startPoint.x;
+            let finalY = 0; // Bubble goes up
+            if (this.endPoint.y >= this.startPoint.y) finalY = NormalHeight; // Bubble goes down
 
-            this.endPoint.y = 0;
-            this.endPoint.x = -(b / m);
+            const m = (this.startPoint.y - this.endPoint.y) / (this.startPoint.x - this.endPoint.x);
+            const b = this.endPoint.y - m * this.endPoint.x;
+
+            this.endPoint.y = finalY;
+            this.endPoint.x = (this.endPoint.y - b) / m;
         }
 
         public pop(): Tween {
@@ -289,6 +292,8 @@ namespace BubbleGunner.Game {
         }
 
         private aimGunToPoint(targetPoint: Point): void {
+            const minAngle = -10;
+
             let handRegStagePoint = this.getHandRegStagePoint();
             if (handRegStagePoint.x < targetPoint.x) {
                 this.scaleX = -Math.abs(this.scaleX);
@@ -297,13 +302,15 @@ namespace BubbleGunner.Game {
             }
             handRegStagePoint = this.getHandRegStagePoint();
 
-            let yz = handRegStagePoint.y - targetPoint.y;
-            let xz = handRegStagePoint.x - targetPoint.x;
+            let yDiff = targetPoint.y - handRegStagePoint.y;
+            let xDiff = targetPoint.x - handRegStagePoint.x;
 
-            let angle: number;
-            angle = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+            let angle = Math.atan(yDiff / xDiff) / Math.PI * 180;
+            if (this.scaleX < 0) angle *= -1;
+            if (angle < minAngle) angle = minAngle;
+
             this._hand.rotation = angle;
-            // console.debug(`aiming at angle: ${angle}`);
+            console.debug(`aiming at angle: ${angle}`);
         }
 
         private getHandRegStagePoint(): Point {
