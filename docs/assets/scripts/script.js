@@ -10,6 +10,8 @@ function resizeCanvas(canvas, stage) {
         canvas.height = canvas.width = max;
     var scaleFactor = canvas.width / BubbleGunner.NormalWidth;
     stage.scaleX = stage.scaleY = scaleFactor;
+    var marginTop = (window.innerHeight - canvas.height) / 2;
+    canvas.style.marginTop = marginTop + "px";
 }
 function init() {
     BubbleGunner.canvas = document.getElementById("canvas");
