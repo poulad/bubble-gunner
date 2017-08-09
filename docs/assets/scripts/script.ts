@@ -1,25 +1,20 @@
 function resizeCanvas(canvas: HTMLCanvasElement, stage: createjs.Stage) {
-    const widthToHeightRatio = 4 / 3;
-    const maxWidth = 1200;
-    const maxHeight = 900;
-
-    const normalWidth = 800;
-    const normalHeight = 600;
+    const max = 1200;
 
     if (window.innerHeight <= window.innerWidth) {
-        canvas.height = window.innerHeight;
-        canvas.width = canvas.height * widthToHeightRatio;
+        canvas.height = canvas.width = window.innerHeight;
     } else {
-        canvas.width = window.innerWidth;
-        canvas.height = canvas.width / widthToHeightRatio;
+        canvas.height = canvas.width = window.innerWidth;
     }
 
-    if (canvas.width > maxWidth) canvas.width = maxWidth;
-    if (canvas.height > maxHeight) canvas.height = maxHeight;
+    if (canvas.width > max)
+        canvas.height = canvas.width = max;
 
-    let scaleFactor = canvas.width / normalWidth;
-
+    let scaleFactor = canvas.width / BubbleGunner.NormalWidth;
     stage.scaleX = stage.scaleY = scaleFactor;
+
+    const marginTop = (window.innerHeight - canvas.height) / 2;
+    canvas.style.marginTop = `${marginTop}px`;
 }
 
 function init() {

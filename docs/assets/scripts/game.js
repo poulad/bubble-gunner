@@ -78,7 +78,7 @@ var BubbleGunner;
                     .call(this.dispatchEvent.bind(this, Animal.EventFell));
             };
             Animal.EventFell = "fell";
-            Animal.Radius = 18;
+            Animal.Radius = 22;
             return Animal;
         }(Shape));
         var Lava = (function (_super) {
@@ -105,8 +105,8 @@ var BubbleGunner;
             };
             Lava.EventFell = "fell";
             Lava.Speed = 400;
-            Lava.Width = 20;
-            Lava.Height = 18;
+            Lava.Width = 25;
+            Lava.Height = 20;
             return Lava;
         }(Shape));
         var Bubble = (function (_super) {
@@ -119,7 +119,6 @@ var BubbleGunner;
                     .beginFill('rgba(255, 255, 255, .1)')
                     .beginStroke('rgba(255, 255, 255, .8)')
                     .drawCircle(0, 0, Bubble.Radius);
-                _this.on("tick", _this.pulse, _this);
                 _this.startPoint = from;
                 _this.x = _this.startPoint.x;
                 _this.y = _this.startPoint.y;
@@ -127,6 +126,7 @@ var BubbleGunner;
                 return _this;
             }
             Bubble.prototype.move = function () {
+                this.on("tick", this.handleTick, this);
                 this.updateEndPoint();
                 return Tween.get(this)
                     .to({
@@ -136,47 +136,23 @@ var BubbleGunner;
                     .call(this.dispatchEvent.bind(this, new Event(Bubble.EventAscended)));
             };
             Bubble.prototype.takeAnimal = function (animal) {
-                var _this = this;
                 this._animal = animal;
                 this.containsAnimal = true;
-                this.graphics
-                    .clear()
-                    .beginFill('rgba(255, 255, 255, .1)')
-                    .beginStroke('rgba(255, 255, 255, .8)')
-                    .drawCircle(0, 0, Bubble.Radius);
                 this.x = this._animal.x;
                 this.y = this._animal.y;
-                Tween.removeTweens(this._animal);
                 Tween.removeTweens(this);
-                var targetY = -7;
-                var duration = 3500;
-                var tween = Tween.get(this)
-                    .to({ y: targetY }, duration)
+                Tween.removeTweens(this._animal);
+                this.startPoint = new Point(this.x, this.y);
+                this.endPoint = new Point(this.x, -Animal.Radius);
+                return Tween.get(this)
+                    .to({
+                    x: this.endPoint.x,
+                    y: this.endPoint.y
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Bubble.AscendingSpeed))
                     .call(this.dispatchEvent.bind(this, new Event(Bubble.EventRescuedAnimal)));
-                tween.on("change", function () { return _this._animal.y = _this.y; }, this);
-                return tween;
             };
             Bubble.prototype.getAnimal = function () {
                 return this._animal;
-            };
-            Bubble.prototype.pulse = function () {
-                var alpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
-                Tween.get(this)
-                    .to({
-                    alpha: alpha
-                }, 100);
-                this._pulseCount++;
-            };
-            Bubble.prototype.updateEndPoint = function () {
-                /*
-                 line equation:
-                 y = mx + b
-                 m = (y2 - y1) / (x2 - x1)
-                 */
-                var m = (this.endPoint.y - this.startPoint.y) / (this.endPoint.x - this.startPoint.x);
-                var b = this.startPoint.y - m * this.startPoint.x;
-                this.endPoint.y = 0;
-                this.endPoint.x = -(b / m);
             };
             Bubble.prototype.pop = function () {
                 Tween.removeTweens(this);
@@ -188,11 +164,42 @@ var BubbleGunner;
                     alpha: 0
                 }).call(this.dispatchEvent.bind(this, new Event(Bubble.EventPopped)));
             };
+            Bubble.prototype.handleTick = function () {
+                if (this.x < (0 - Bubble.Radius * this.scaleX) ||
+                    (BubbleGunner.NormalWidth + Bubble.Radius * this.scaleX) < this.x) {
+                    // Bubble is out of the visual horizon of canvas
+                    this.dispatchEvent(new Event(Bubble.EventAscended));
+                }
+                if (this.containsAnimal) {
+                    this._animal.y = this.y;
+                }
+                this.pulse();
+            };
+            Bubble.prototype.pulse = function () {
+                var newAlpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
+                Tween.get(this).to({ alpha: newAlpha });
+                this._pulseCount++;
+            };
+            Bubble.prototype.updateEndPoint = function () {
+                /*
+                 line equation:
+                 y = mx + b
+                 m = (y2 - y1) / (x2 - x1)
+                 */
+                var finalY = 0; // Bubble goes up
+                if (this.endPoint.y >= this.startPoint.y)
+                    finalY = BubbleGunner.NormalHeight; // Bubble goes down
+                var m = (this.startPoint.y - this.endPoint.y) / (this.startPoint.x - this.endPoint.x);
+                var b = this.endPoint.y - m * this.endPoint.x;
+                this.endPoint.y = finalY;
+                this.endPoint.x = (this.endPoint.y - b) / m;
+            };
             Bubble.EventPopped = "popped";
             Bubble.EventAscended = "ascended";
             Bubble.EventRescuedAnimal = "rescued";
-            Bubble.Radius = 22;
+            Bubble.Radius = 28;
             Bubble.Speed = 450;
+            Bubble.AscendingSpeed = 100;
             return Bubble;
         }(Shape));
         var DragonHand = (function (_super) {
@@ -256,6 +263,7 @@ var BubbleGunner;
                 return this._canShoot;
             };
             Dragon.prototype.aimGunToPoint = function (targetPoint) {
+                var minAngle = -10;
                 var handRegStagePoint = this.getHandRegStagePoint();
                 if (handRegStagePoint.x < targetPoint.x) {
                     this.scaleX = -Math.abs(this.scaleX);
@@ -264,10 +272,13 @@ var BubbleGunner;
                     this.scaleX = Math.abs(this.scaleX);
                 }
                 handRegStagePoint = this.getHandRegStagePoint();
-                var yz = handRegStagePoint.y - targetPoint.y;
-                var xz = handRegStagePoint.x - targetPoint.x;
-                var angle;
-                angle = Math.abs(Math.atan(yz / xz) / Math.PI * 180);
+                var yDiff = targetPoint.y - handRegStagePoint.y;
+                var xDiff = targetPoint.x - handRegStagePoint.x;
+                var angle = Math.atan(yDiff / xDiff) / Math.PI * 180;
+                if (this.scaleX < 0)
+                    angle *= -1;
+                if (angle < minAngle)
+                    angle = minAngle;
                 this._hand.rotation = angle;
                 // console.debug(`aiming at angle: ${angle}`);
             };
@@ -421,9 +432,9 @@ var BubbleGunner;
                 _this.addChild(_this._scoresBar);
                 _this.setChildIndex(_this._scoresBar, 3);
                 _this._dragon = new Dragon();
-                _this._dragon.scaleX = _this._dragon.scaleY = .25;
-                _this._dragon.x = 400 - _this._dragon.originalWidth / 2;
-                _this._dragon.y = 600 - _this._dragon.originalHeight * _this._dragon.scaleY;
+                _this._dragon.scaleX = _this._dragon.scaleY = .3;
+                _this._dragon.x = BubbleGunner.NormalWidth / 2;
+                _this._dragon.y = BubbleGunner.NormalHeight - _this._dragon.originalHeight * _this._dragon.scaleY - 40;
                 _this.addChild(_this._dragon);
                 _this.setChildIndex(_this._dragon, 3);
                 _this._pauseButton = new Bitmap(BubbleGunner.loader.getResult("pause"));
