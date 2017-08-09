@@ -20,14 +20,6 @@ var BubbleGunner;
         var Ease = createjs.Ease;
         var EventDispatcher = createjs.EventDispatcher;
         var Sound = createjs.Sound;
-        function isOfType(type) {
-            return function (o) { return o instanceof type; };
-        }
-        Game.isOfType = isOfType;
-        function toType() {
-            return function (o) { return o; };
-        }
-        Game.toType = toType;
         function hasCollisions(tuple) {
             return tuple[1].length > 0;
         }
@@ -77,7 +69,7 @@ var BubbleGunner;
             };
             Animal.prototype.continueFall = function () {
                 Tween.removeTweens(this);
-                var newEndPoint = new Point(this.endPoint.x, BubbleGunner.getCanvasDimensions()[1]);
+                var newEndPoint = new Point(this.endPoint.x, BubbleGunner.NormalHeight);
                 return this.moveTo(newEndPoint);
             };
             Animal.prototype.fallCallback = function () {
@@ -219,23 +211,23 @@ var BubbleGunner;
                 var _this = _super.call(this) || this;
                 _this.originalWidth = 140;
                 _this.originalHeight = 408;
+                _this._canShoot = true;
                 _this._body = new Bitmap(BubbleGunner.loader.getResult("dragon"));
                 _this._hand = new Bitmap(BubbleGunner.loader.getResult("dragon-hand"));
                 _this._hand.regX = 426;
                 _this._hand.regY = 110;
                 _this._hand.x = 250;
                 _this._hand.y = 180;
-                _this._canShoot = true;
                 _this.addChild(_this._body, _this._hand);
                 return _this;
             }
             Dragon.prototype.shootBubbleTo = function (point) {
-                var _this = this;
-                if (this._canShoot == false)
+                if (!this._canShoot)
                     return;
                 this.aimGunToPoint(point);
-                var bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
-                console.debug("Shooting bubble from: " + this.getGunMuzzleStagePoint());
+                var gunMuzzlePoint = this.getGunMuzzleStagePoint();
+                var bubble = new Bubble(gunMuzzlePoint, point);
+                console.debug("Shooting bubble from: " + gunMuzzlePoint);
                 var targetScale = bubble.scaleX;
                 bubble.scaleX = bubble.scaleY = .1;
                 Tween.get(bubble)
@@ -243,15 +235,25 @@ var BubbleGunner;
                     scaleX: targetScale,
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
-                this._canShoot = false;
-                this._fireRateInterval = setInterval(function () {
-                    _this._canShoot = true;
-                    clearInterval(_this._fireRateInterval);
-                }, 300);
+                this.setGunTimeout(Dragon.FireRate);
                 return bubble;
             };
+            Dragon.prototype.setGunTimeout = function (time) {
+                var _this = this;
+                this._canShoot = false;
+                setTimeout(function () {
+                    if (_this)
+                        _this._canShoot = true;
+                }, time);
+            };
             Dragon.prototype.aimGun = function (evt) {
-                this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+                var stage = evt.target;
+                var stagePoint = new Point(evt.stageX / stage.scaleX, evt.stageY / stage.scaleY);
+                // console.debug(`Mouse on stage point: ${stagePoint}`);
+                this.aimGunToPoint(stagePoint);
+            };
+            Dragon.prototype.isReadyToShoot = function () {
+                return this._canShoot;
             };
             Dragon.prototype.aimGunToPoint = function (targetPoint) {
                 var handRegStagePoint = this.getHandRegStagePoint();
@@ -285,6 +287,7 @@ var BubbleGunner;
                 // console.debug(`Gun muzzle at: ${p}`);
                 return p;
             };
+            Dragon.FireRate = 300;
             return Dragon;
         }(Container));
         var LevelManager = (function (_super) {
@@ -414,7 +417,7 @@ var BubbleGunner;
                 _this._scoresBar = new ScoresBar(_this._levelManager);
                 _this._scoresBar.x = 10;
                 _this._scoresBar.y = 10;
-                _this._scoresBar.on(ScoresBar.EventNoLifeLeft, _this.changeGameScene.bind(_this, BubbleGunner.SceneType.GameOver));
+                _this._scoresBarListener = _this._scoresBar.on(ScoresBar.EventNoLifeLeft, _this.changeGameScene.bind(_this, BubbleGunner.SceneType.GameOver));
                 _this.addChild(_this._scoresBar);
                 _this.setChildIndex(_this._scoresBar, 3);
                 _this._dragon = new Dragon();
@@ -423,14 +426,14 @@ var BubbleGunner;
                 _this._dragon.y = 600 - _this._dragon.originalHeight * _this._dragon.scaleY;
                 _this.addChild(_this._dragon);
                 _this.setChildIndex(_this._dragon, 3);
-                var pause = new Bitmap(BubbleGunner.loader.getResult("pause"));
-                pause.x = 30;
-                pause.y = BubbleGunner.NormalHeight - pause.getBounds().height - 30;
-                pause.on("click", _this.changeGameScene.bind(_this, BubbleGunner.SceneType.Menu));
-                pause.cursor = "pointer";
-                _this.addChild(pause);
-                _this.setChildIndex(pause, 3);
-                _this.on("tick", _this.tick, _this);
+                _this._pauseButton = new Bitmap(BubbleGunner.loader.getResult("pause"));
+                _this._pauseButton.x = 30;
+                _this._pauseButton.y = BubbleGunner.NormalHeight - _this._pauseButton.getBounds().height - 30;
+                _this._pauseButton.cursor = "pointer";
+                _this._pauseButtonListener = _this._pauseButton.on("click", _this.changeGameScene.bind(_this, BubbleGunner.SceneType.Menu));
+                _this.addChild(_this._pauseButton);
+                _this.setChildIndex(_this._pauseButton, 3);
+                _this._tickListener = _this.on("tick", _this.handleTick, _this);
                 return _this;
             }
             GameScene.prototype.start = function () {
@@ -440,17 +443,23 @@ var BubbleGunner;
                 }
                 this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
                 this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
-                this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
-                this.stage.on("stagemouseup", this.handleClick, this);
+                this._mouseMoveListener = this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
+                this._mouseUpListener = this.stage.on("stagemouseup", this.handleClick, this);
                 this.playBackgroundMusic();
             };
             GameScene.prototype.changeGameScene = function (toScene) {
-                this.removeAllChildren();
-                this._bubbles.length = this._animals.length = this._lavas.length = 0;
+                this.off("tick", this._tickListener);
+                this.stage.off("stagemousemove", this._mouseMoveListener);
+                this.stage.off("stagemouseup", this._mouseUpListener);
+                this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
+                this._bgMusic.off("complete", this._bgMusicListener);
+                this._pauseButton.off("click", this._pauseButtonListener);
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
-                clearInterval(this._dragon._fireRateInterval);
                 this._bgMusic.stop();
+                this.removeAllChildren();
+                this._bubbles.length = this._animals.length = this._lavas.length = 0;
+                // ToDo: Clear up all events handlers, and etc
                 switch (toScene) {
                     case BubbleGunner.SceneType.Menu:
                         this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
@@ -472,7 +481,7 @@ var BubbleGunner;
                 this.setChildIndex(animal, 2);
                 console.debug(this._animals);
                 animal.on(Animal.EventFell, this.handleAnimalFall, this);
-                animal.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
+                animal.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.NormalHeight));
             };
             GameScene.prototype.handleLavaRainInterval = function () {
                 var _this = this;
@@ -483,7 +492,7 @@ var BubbleGunner;
                     _this.setChildIndex(lava, 2);
                     console.debug(_this._lavas);
                     lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, _this);
-                    lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.getCanvasDimensions()[1]));
+                    lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.NormalHeight));
                 };
                 // console.debug(`level: ${this._levelManager.currentLevel}`);
                 switch (this._levelManager.currentLevel) {
@@ -503,7 +512,10 @@ var BubbleGunner;
             };
             GameScene.prototype.handleClick = function (evt) {
                 var _this = this;
-                var bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
+                if (!this._dragon.isReadyToShoot())
+                    return;
+                var stagePoint = new Point(evt.stageX / this.stage.scaleX, evt.stageY / this.stage.scaleY);
+                var bubble = this._dragon.shootBubbleTo(stagePoint);
                 this.lockShapes(function () {
                     _this._bubbles.push(bubble);
                 });
@@ -520,7 +532,7 @@ var BubbleGunner;
             };
             GameScene.prototype.playBackgroundMusic = function () {
                 this._bgMusic = Sound.play("bgm");
-                this._bgMusic.on("complete", this.playBackgroundMusic, this);
+                this._bgMusicListener = this._bgMusic.on("complete", this.playBackgroundMusic, this);
                 this._bgMusic.volume = 100;
                 this._bgMusic.pan = .5;
             };
@@ -554,7 +566,7 @@ var BubbleGunner;
                             console.debug(_this._lavas);
                         }
                         else {
-                            console.warn("Unkown type to remove: " + shape);
+                            console.warn("Unknown type to remove: " + shape);
                         }
                     };
                     for (var _i = 0, shapes_1 = shapes; _i < shapes_1.length; _i++) {
@@ -563,17 +575,19 @@ var BubbleGunner;
                     }
                 });
             };
-            GameScene.prototype.tick = function () {
+            GameScene.prototype.handleTick = function () {
                 var _this = this;
                 if (!this._isShapesLockFree)
                     return;
                 this.lockShapes(function () {
+                    if (_this.isCollidingWithAnyLava(_this._lavas))
+                        _this._dragon.setGunTimeout(1000);
                     _this._bubbles
                         .filter(_this.isCollidingWithAnyLava(_this._lavas))
                         .forEach(function (b) { return b.pop(); });
                     _this._bubbles
-                        .filter(function (b) { return !b.containsAnimal; })
-                        .map(function (b) { return [b, _this.findAnimalsCollidingWithBubble(b)]; })
+                        .filter(_this.isNotCollidingWithOtherBubbles(_this._bubbles))
+                        .map(function (b) { return [b, _this.findAnimalsCollidingWithBubble(b, _this._animals)]; })
                         .filter(hasCollisions)
                         .map(function (tuple) { return [tuple[0], tuple[1][0]]; })
                         .forEach(function (tuple) { return tuple[0].takeAnimal(tuple[1]); });
@@ -581,27 +595,36 @@ var BubbleGunner;
             };
             GameScene.getRandomX = function () {
                 var x;
-                x = (Math.random() * 324627938) % BubbleGunner.getCanvasDimensions()[0];
+                x = (Math.random() * 324627938) % BubbleGunner.NormalWidth;
                 return x;
-            };
-            GameScene.getRandomY = function () {
-                var y;
-                y = (Math.random() * 876372147) % BubbleGunner.getCanvasDimensions()[1];
-                return y;
             };
             GameScene.prototype.lockShapes = function (f) {
                 this._isShapesLockFree = false;
                 f();
                 this._isShapesLockFree = true;
             };
-            GameScene.prototype.findAnimalsCollidingWithBubble = function (bubble) {
+            GameScene.prototype.isNotCollidingWithOtherBubbles = function (allBubbles) {
+                var centersDistance = Bubble.Radius * 2;
+                return function (bubble) {
+                    var circle1Center = new Point(bubble.x, bubble.y);
+                    var isCollidingWithBubble = function (b) {
+                        var circle2Center = new Point(b.x, b.y);
+                        return findDistance(circle1Center, circle2Center) <= centersDistance;
+                    };
+                    return (allBubbles
+                        .filter(function (b) { return b !== bubble; })
+                        .filter(isCollidingWithBubble)
+                        .length === 0);
+                };
+            };
+            GameScene.prototype.findAnimalsCollidingWithBubble = function (bubble, animals) {
                 var centersDistance = Bubble.Radius + Animal.Radius;
                 var circle1Center = new Point(bubble.x, bubble.y);
                 var isAnimalColliding = function (a) {
                     var circle2Center = new Point(a.x, a.y);
                     return findDistance(circle1Center, circle2Center) <= centersDistance;
                 };
-                return this._animals.filter(isAnimalColliding);
+                return animals.filter(isAnimalColliding);
             };
             GameScene.prototype.isCollidingWithAnyLava = function (lavas) {
                 return function (b) { return (lavas

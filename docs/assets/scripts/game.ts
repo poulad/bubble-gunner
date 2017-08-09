@@ -9,14 +9,7 @@ namespace BubbleGunner.Game {
     import EventDispatcher = createjs.EventDispatcher;
     import Sound = createjs.Sound;
     import AbstractSoundInstance = createjs.AbstractSoundInstance;
-
-    export function isOfType<T>(type: T) {
-        return (o: any) => o instanceof (<any>type);
-    }
-
-    export function toType<T>() {
-        return (o: any) => o as T;
-    }
+    import Stage = createjs.Stage;
 
     export function hasCollisions(tuple: [Bubble, Animal[]]): boolean {
         return tuple[1].length > 0;
@@ -77,7 +70,7 @@ namespace BubbleGunner.Game {
 
         public continueFall(): Tween {
             Tween.removeTweens(this);
-            let newEndPoint = new Point(this.endPoint.x, getCanvasDimensions()[1]);
+            let newEndPoint = new Point(this.endPoint.x, NormalHeight);
             return this.moveTo(newEndPoint);
         }
 
@@ -238,34 +231,36 @@ namespace BubbleGunner.Game {
     }
 
     class Dragon extends Container {
+
         public originalWidth = 140;
         public originalHeight = 408;
-        private _canShoot: boolean;
-        public _fireRateInterval;
+
+        private static FireRate: number = 300;
+
         private _body: Bitmap;
         private _hand: DragonHand;
+        private _canShoot: boolean = true;
 
         constructor() {
             super();
             this._body = new Bitmap(loader.getResult(`dragon`));
-
             this._hand = new Bitmap(loader.getResult(`dragon-hand`));
             this._hand.regX = 426;
             this._hand.regY = 110;
             this._hand.x = 250;
             this._hand.y = 180;
-            this._canShoot = true;
             this.addChild(this._body, this._hand);
         }
 
         public shootBubbleTo(point: Point): Bubble {
-            if(this._canShoot == false)
+            if (!this._canShoot)
                 return;
 
             this.aimGunToPoint(point);
 
-            let bubble = new Bubble(this.getGunMuzzleStagePoint(), point);
-            console.debug(`Shooting bubble from: ${this.getGunMuzzleStagePoint()}`);
+            let gunMuzzlePoint = this.getGunMuzzleStagePoint();
+            let bubble = new Bubble(gunMuzzlePoint, point);
+            console.debug(`Shooting bubble from: ${gunMuzzlePoint}`);
 
             const targetScale = bubble.scaleX;
             bubble.scaleX = bubble.scaleY = .1;
@@ -274,16 +269,27 @@ namespace BubbleGunner.Game {
                     scaleX: targetScale,
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
-            this._canShoot = false;
-            this._fireRateInterval = setInterval(()=> {
-                this._canShoot = true;
-                clearInterval(this._fireRateInterval);
-            }, 300);
+            this.setGunTimeout(Dragon.FireRate);
             return bubble;
         }
 
-        public aimGun(evt: MouseEvent) {
-            this.aimGunToPoint(new Point(evt.stageX, evt.stageY));
+        public setGunTimeout(time: number) {
+            this._canShoot = false;
+            setTimeout(() => {
+                if (this)
+                    this._canShoot = true;
+            }, time);
+        }
+
+        public aimGun(evt: MouseEvent): void {
+            let stage = evt.target as Stage;
+            let stagePoint = new Point(evt.stageX / stage.scaleX, evt.stageY / stage.scaleY);
+            // console.debug(`Mouse on stage point: ${stagePoint}`);
+            this.aimGunToPoint(stagePoint);
+        }
+
+        public isReadyToShoot(): boolean {
+            return this._canShoot;
         }
 
         private aimGunToPoint(targetPoint: Point): void {
@@ -446,13 +452,21 @@ namespace BubbleGunner.Game {
         private _levelManager: LevelManager = new LevelManager();
         private _scoresBar: ScoresBar;
         private _dragon: Dragon;
+        private _pauseButton: Bitmap;
+        private _bgMusic: AbstractSoundInstance;
         private _animals: Animal[] = [];
         private _bubbles: Bubble[] = [];
         private _lavas: Lava[] = [];
         private _isShapesLockFree: boolean = true;
+
         private _animalRainInterval: number;
         private _lavaRainInterval: number;
-        private _bgMusic: AbstractSoundInstance;
+        private _tickListener: Function;
+        private _mouseMoveListener: Function;
+        private _mouseUpListener: Function;
+        private _scoresBarListener: Function;
+        private _pauseButtonListener: Function;
+        private _bgMusicListener: Function;
 
         constructor() {
             super();
@@ -470,7 +484,7 @@ namespace BubbleGunner.Game {
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;
-            this._scoresBar.on(ScoresBar.EventNoLifeLeft, this.changeGameScene.bind(this, SceneType.GameOver));
+            this._scoresBarListener = this._scoresBar.on(ScoresBar.EventNoLifeLeft, this.changeGameScene.bind(this, SceneType.GameOver));
             this.addChild(this._scoresBar);
             this.setChildIndex(this._scoresBar, 3);
 
@@ -481,34 +495,44 @@ namespace BubbleGunner.Game {
             this.addChild(this._dragon);
             this.setChildIndex(this._dragon, 3);
 
-            let pause = new Bitmap(loader.getResult(`pause`));
-            pause.x = 30;
-            pause.y = NormalHeight - pause.getBounds().height - 30;
-            pause.on(`click`, this.changeGameScene.bind(this, SceneType.Menu));
-            pause.cursor = `pointer`;
-            this.addChild(pause);
-            this.setChildIndex(pause, 3);
+            this._pauseButton = new Bitmap(loader.getResult(`pause`));
+            this._pauseButton.x = 30;
+            this._pauseButton.y = NormalHeight - this._pauseButton.getBounds().height - 30;
+            this._pauseButton.cursor = `pointer`;
+            this._pauseButtonListener = this._pauseButton.on(`click`, this.changeGameScene.bind(this, SceneType.Menu));
+            this.addChild(this._pauseButton);
+            this.setChildIndex(this._pauseButton, 3);
 
-            this.on(`tick`, this.tick, this);
+            this._tickListener = this.on(`tick`, this.handleTick, this);
         }
 
         public start(...args: any[]): void {
             this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
             this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
 
-            this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
-            this.stage.on(`stagemouseup`, this.handleClick, this);
+            this._mouseMoveListener = this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
+            this._mouseUpListener = this.stage.on(`stagemouseup`, this.handleClick, this);
 
             this.playBackgroundMusic();
         }
 
         public changeGameScene(toScene: SceneType): void {
-            this.removeAllChildren();
-            this._bubbles.length = this._animals.length = this._lavas.length = 0;
+            this.off(`tick`, this._tickListener);
+            this.stage.off(`stagemousemove`, this._mouseMoveListener);
+            this.stage.off(`stagemouseup`, this._mouseUpListener);
+            this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
+            this._bgMusic.off(`complete`, this._bgMusicListener);
+            this._pauseButton.off(`click`, this._pauseButtonListener);
+
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
-            clearInterval(this._dragon._fireRateInterval);
+
             this._bgMusic.stop();
+            this.removeAllChildren();
+
+            this._bubbles.length = this._animals.length = this._lavas.length = 0;
+
+            // ToDo: Clear up all events handlers, and etc
 
             switch (toScene) {
                 case SceneType.Menu:
@@ -532,7 +556,7 @@ namespace BubbleGunner.Game {
             console.debug(this._animals);
 
             animal.on(Animal.EventFell, this.handleAnimalFall, this);
-            animal.moveTo(new Point(GameScene.getRandomX(), getCanvasDimensions()[1]));
+            animal.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
         }
 
         private handleLavaRainInterval() {
@@ -544,7 +568,7 @@ namespace BubbleGunner.Game {
                 console.debug(this._lavas);
 
                 lava.on(Lava.EventFell, () => this.removeShape(lava), this);
-                lava.moveTo(new Point(GameScene.getRandomX(), getCanvasDimensions()[1]));
+                lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
             switch (this._levelManager.currentLevel) {
@@ -564,7 +588,12 @@ namespace BubbleGunner.Game {
         }
 
         private handleClick(evt: createjs.MouseEvent): void {
-            let bubble = this._dragon.shootBubbleTo(new Point(evt.stageX, evt.stageY));
+            if (!this._dragon.isReadyToShoot()) return;
+
+            let stagePoint = new Point(
+                evt.stageX / this.stage.scaleX,
+                evt.stageY / this.stage.scaleY);
+            let bubble = this._dragon.shootBubbleTo(stagePoint);
             this.lockShapes(() => {
                 this._bubbles.push(bubble);
             });
@@ -583,7 +612,7 @@ namespace BubbleGunner.Game {
 
         private playBackgroundMusic(): void {
             this._bgMusic = Sound.play(`bgm`);
-            this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
+            this._bgMusicListener = this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
             this._bgMusic.volume = 100;
             this._bgMusic.pan = .5;
         }
@@ -615,24 +644,26 @@ namespace BubbleGunner.Game {
 
                         console.debug(this._lavas);
                     } else {
-                        console.warn(`Unkown type to remove: ${shape}`);
+                        console.warn(`Unknown type to remove: ${shape}`);
                     }
                 }
             });
         }
 
-        private tick(): void {
+        private handleTick(): void {
             if (!this._isShapesLockFree)
                 return;
 
             this.lockShapes(() => {
+                if(this.isCollidingWithAnyLava(this._lavas))
+                    this._dragon.setGunTimeout(1000);
                 this._bubbles
                     .filter(this.isCollidingWithAnyLava(this._lavas))
                     .forEach((b: Bubble) => b.pop());
 
                 this._bubbles
-                    .filter(b => !b.containsAnimal)
-                    .map(b => [b, this.findAnimalsCollidingWithBubble(b)])
+                    .filter(this.isNotCollidingWithOtherBubbles(this._bubbles))
+                    .map(b => [b, this.findAnimalsCollidingWithBubble(b, this._animals)])
                     .filter(hasCollisions)
                     .map(tuple => <[Bubble, Animal]>[tuple[0], tuple[1][0]])
                     .forEach((tuple: [Bubble, Animal]) => tuple[0].takeAnimal(tuple[1]));
@@ -641,14 +672,8 @@ namespace BubbleGunner.Game {
 
         private static getRandomX(): number {
             let x: number;
-            x = (Math.random() * 324627938) % getCanvasDimensions()[0];
+            x = (Math.random() * 324627938) % NormalWidth;
             return x;
-        }
-
-        private static getRandomY(): number {
-            let y: number;
-            y = (Math.random() * 876372147) % getCanvasDimensions()[1];
-            return y;
         }
 
         private lockShapes(f: Function) {
@@ -657,7 +682,24 @@ namespace BubbleGunner.Game {
             this._isShapesLockFree = true;
         }
 
-        private findAnimalsCollidingWithBubble(bubble: Bubble): Animal[] {
+        private isNotCollidingWithOtherBubbles(allBubbles: Bubble[]) {
+            const centersDistance = Bubble.Radius * 2;
+
+            return (bubble: Bubble) => {
+                let circle1Center = new Point(bubble.x, bubble.y);
+                let isCollidingWithBubble = (b: Bubble) => {
+                    let circle2Center = new Point(b.x, b.y);
+                    return findDistance(circle1Center, circle2Center) <= centersDistance;
+                };
+
+                return (allBubbles
+                    .filter(b => b !== bubble)
+                    .filter(isCollidingWithBubble)
+                    .length === 0);
+            };
+        }
+
+        private findAnimalsCollidingWithBubble(bubble: Bubble, animals: Animal[]): Animal[] {
             const centersDistance = Bubble.Radius + Animal.Radius;
             let circle1Center = new Point(bubble.x, bubble.y);
 
@@ -666,7 +708,7 @@ namespace BubbleGunner.Game {
                 return findDistance(circle1Center, circle2Center) <= centersDistance;
             };
 
-            return this._animals.filter(isAnimalColliding);
+            return animals.filter(isAnimalColliding);
         }
 
         private isCollidingWithAnyLava(lavas: Lava[]) {
