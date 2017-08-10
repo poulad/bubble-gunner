@@ -254,7 +254,7 @@ namespace BubbleGunner.Game {
         private _body: Bitmap;
         private _hand: DragonHand;
         private _canShoot: boolean = true;
-
+        private _timer: number;
         constructor() {
             super();
             this._body = new Bitmap(loader.getResult(`dragon`));
@@ -287,11 +287,16 @@ namespace BubbleGunner.Game {
             return bubble;
         }
 
+        public getTimer(): number {
+            return this._timer;
+        }
+
         public setGunTimeout(time: number) {
             this._canShoot = false;
-            setTimeout(() => {
-                if (this)
+            this._timer = setTimeout(() => {
+                if (this) {
                     this._canShoot = true;
+                }
             }, time);
         }
 
@@ -407,7 +412,6 @@ namespace BubbleGunner.Game {
             this._scoreText.y = 0;
             this.addChild(this._scoreText);
             this.setChildIndex(this._scoreText, 1);
-
 
             for (let i = 0; i < _remainingLives; i++) {
                 let heart = new Bitmap(loader.getResult(`heart`));
@@ -631,7 +635,7 @@ namespace BubbleGunner.Game {
         private playBackgroundMusic(): void {
             this._bgMusic = Sound.play(`bgm`);
             this._bgMusicListener = this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
-            this._bgMusic.volume = 100;
+            this._bgMusic.volume = 1;
             this._bgMusic.pan = .5;
         }
 
@@ -673,11 +677,15 @@ namespace BubbleGunner.Game {
                 return;
 
             this.lockShapes(() => {
-                if(this.isCollidingWithAnyLava(this._lavas))
-                    this._dragon.setGunTimeout(1000);
                 this._bubbles
                     .filter(this.isCollidingWithAnyLava(this._lavas))
-                    .forEach((b: Bubble) => b.pop());
+                    .forEach((b: Bubble) => {
+                        b.pop();
+                        console.log("hit lava!");
+                        clearTimeout(this._dragon.getTimer());
+                        this._dragon.setGunTimeout(1000);
+                    }
+                );
 
                 this._bubbles
                     .filter(this.isNotCollidingWithOtherBubbles(this._bubbles))

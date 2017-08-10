@@ -245,12 +245,16 @@ var BubbleGunner;
                 this.setGunTimeout(Dragon.FireRate);
                 return bubble;
             };
+            Dragon.prototype.getTimer = function () {
+                return this._timer;
+            };
             Dragon.prototype.setGunTimeout = function (time) {
                 var _this = this;
                 this._canShoot = false;
-                setTimeout(function () {
-                    if (_this)
+                this._timer = setTimeout(function () {
+                    if (_this) {
                         _this._canShoot = true;
+                    }
                 }, time);
             };
             Dragon.prototype.aimGun = function (evt) {
@@ -544,7 +548,7 @@ var BubbleGunner;
             GameScene.prototype.playBackgroundMusic = function () {
                 this._bgMusic = Sound.play("bgm");
                 this._bgMusicListener = this._bgMusic.on("complete", this.playBackgroundMusic, this);
-                this._bgMusic.volume = 100;
+                this._bgMusic.volume = 1;
                 this._bgMusic.pan = .5;
             };
             GameScene.prototype.handleAnimalFall = function (evt) {
@@ -591,11 +595,14 @@ var BubbleGunner;
                 if (!this._isShapesLockFree)
                     return;
                 this.lockShapes(function () {
-                    if (_this.isCollidingWithAnyLava(_this._lavas))
-                        _this._dragon.setGunTimeout(1000);
                     _this._bubbles
                         .filter(_this.isCollidingWithAnyLava(_this._lavas))
-                        .forEach(function (b) { return b.pop(); });
+                        .forEach(function (b) {
+                        b.pop();
+                        console.log("hit lava!");
+                        clearTimeout(_this._dragon.getTimer());
+                        _this._dragon.setGunTimeout(1000);
+                    });
                     _this._bubbles
                         .filter(_this.isNotCollidingWithOtherBubbles(_this._bubbles))
                         .map(function (b) { return [b, _this.findAnimalsCollidingWithBubble(b, _this._animals)]; })
