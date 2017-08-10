@@ -453,6 +453,7 @@ var BubbleGunner;
                 this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
                 this._mouseMoveListener = this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
                 this._mouseUpListener = this.stage.on("stagemouseup", this.handleClick, this);
+                this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
                 this.playBackgroundMusic();
             };
             GameScene.prototype.changeGameScene = function (toScene) {
@@ -462,6 +463,7 @@ var BubbleGunner;
                 this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
                 this._bgMusic.off("complete", this._bgMusicListener);
                 this._pauseButton.off("click", this._pauseButtonListener);
+                this._levelManager.off(LevelManager.EventLevelChanged, this._levelListener);
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
                 this._bgMusic.stop();
@@ -548,6 +550,17 @@ var BubbleGunner;
                 var animal = evt.target;
                 this._scoresBar.decreaseRemainingLives();
                 this.removeShape(animal);
+            };
+            GameScene.prototype.showLevelChangedDemo = function () {
+                // ToDo: Wait for all object on scene to fall/ascend
+                // ToDo: Pause the falls for a 2 seconds
+                this._levelText = new Text(); // ToDo: font, size
+                this._levelText.text = "Level " + this._levelManager.currentLevel;
+                this._levelText.x = BubbleGunner.NormalWidth / 2;
+                this._levelText.y = BubbleGunner.NormalHeight / 2;
+                // ToDo: Animate text for 2 seconds
+                this.addChild(this._levelText);
+                // ToDo: Start the level
             };
             GameScene.prototype.removeShape = function () {
                 var _this = this;

@@ -471,6 +471,7 @@ namespace BubbleGunner.Game {
         private _animals: Animal[] = [];
         private _bubbles: Bubble[] = [];
         private _lavas: Lava[] = [];
+        private _levelText: Text;
         private _isShapesLockFree: boolean = true;
 
         private _animalRainInterval: number;
@@ -481,6 +482,7 @@ namespace BubbleGunner.Game {
         private _scoresBarListener: Function;
         private _pauseButtonListener: Function;
         private _bgMusicListener: Function;
+        private _levelListener: Function;
 
         constructor() {
             super();
@@ -527,6 +529,8 @@ namespace BubbleGunner.Game {
             this._mouseMoveListener = this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this._mouseUpListener = this.stage.on(`stagemouseup`, this.handleClick, this);
 
+            this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
+
             this.playBackgroundMusic();
         }
 
@@ -537,6 +541,7 @@ namespace BubbleGunner.Game {
             this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
             this._bgMusic.off(`complete`, this._bgMusicListener);
             this._pauseButton.off(`click`, this._pauseButtonListener);
+            this._levelManager.off(LevelManager.EventLevelChanged, this._levelListener);
 
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
@@ -635,6 +640,22 @@ namespace BubbleGunner.Game {
             let animal: Animal = evt.target as Animal;
             this._scoresBar.decreaseRemainingLives();
             this.removeShape(animal);
+        }
+
+        private showLevelChangedDemo(): void {
+            // ToDo: Wait for all object on scene to fall/ascend
+            // ToDo: Pause the falls for a 2 seconds
+
+            this._levelText = new Text(); // ToDo: font, size
+            this._levelText.text = `Level ${this._levelManager.currentLevel}`;
+            this._levelText.x = NormalWidth / 2;
+            this._levelText.y = NormalHeight / 2;
+
+            // ToDo: Animate text for 2 seconds
+
+            this.addChild(this._levelText);
+
+            // ToDo: Start the level
         }
 
         private removeShape(...shapes: Shape[]): void {
