@@ -52,6 +52,7 @@ var BubbleGunner;
                     { id: "heart", src: "images/heart.png" },
                     // Menu
                     { id: "menu-volcano", src: "images/volcano-menu.png" },
+                    { id: "menu-dragon", src: "images/dragon-menu.png" },
                     { id: "menu-start", src: "images/start.png" },
                     { id: "menu-help", src: "images/help.png" },
                     // Game - Images
