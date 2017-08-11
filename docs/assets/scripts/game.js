@@ -453,12 +453,19 @@ var BubbleGunner;
                 for (var _i = 0; _i < arguments.length; _i++) {
                     args[_i] = arguments[_i];
                 }
-                this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
-                this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
                 this._mouseMoveListener = this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
                 this._mouseUpListener = this.stage.on("stagemouseup", this.handleClick, this);
                 this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
                 this.playBackgroundMusic();
+                this.startRain();
+            };
+            GameScene.prototype.startRain = function () {
+                this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
+                this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
+            };
+            GameScene.prototype.stopRain = function () {
+                clearInterval(this._animalRainInterval);
+                clearInterval(this._lavaRainInterval);
             };
             GameScene.prototype.changeGameScene = function (toScene) {
                 this.off("tick", this._tickListener);
@@ -468,8 +475,7 @@ var BubbleGunner;
                 this._bgMusic.off("complete", this._bgMusicListener);
                 this._pauseButton.off("click", this._pauseButtonListener);
                 this._levelManager.off(LevelManager.EventLevelChanged, this._levelListener);
-                clearInterval(this._animalRainInterval);
-                clearInterval(this._lavaRainInterval);
+                this.stopRain();
                 this._bgMusic.stop();
                 this.removeAllChildren();
                 this._bubbles.length = this._animals.length = this._lavas.length = 0;
@@ -556,15 +562,31 @@ var BubbleGunner;
                 this.removeShape(animal);
             };
             GameScene.prototype.showLevelChangedDemo = function () {
-                // ToDo: Wait for all object on scene to fall/ascend
-                // ToDo: Pause the falls for a 2 seconds
-                this._levelText = new Text(); // ToDo: font, size
-                this._levelText.text = "Level " + this._levelManager.currentLevel;
-                this._levelText.x = BubbleGunner.NormalWidth / 2;
-                this._levelText.y = BubbleGunner.NormalHeight / 2;
-                // ToDo: Animate text for 2 seconds
-                this.addChild(this._levelText);
-                // ToDo: Start the level
+                var _this = this;
+                this.stopRain();
+                var intervalHandler;
+                intervalHandler = setInterval(function () {
+                    if (_this._animals.length !== 0)
+                        return;
+                    clearInterval(intervalHandler);
+                    _this._levelText = new Text(undefined, "bold 24px serif", "yellow"); // ToDo: font, size
+                    _this._levelText.text = "Level " + _this._levelManager.currentLevel;
+                    _this._levelText.regX = _this._levelText.getMeasuredWidth() / 2;
+                    _this._levelText.regY = _this._levelText.getMeasuredHeight() / 2;
+                    _this._levelText.x = BubbleGunner.NormalWidth / 2;
+                    _this._levelText.y = BubbleGunner.NormalHeight / 2;
+                    Tween.get(_this._levelText)
+                        .to({
+                        scaleX: 5,
+                        scaleY: 5,
+                        alpha: 0
+                    }, 2.5 * 1000)
+                        .call(function () {
+                        _this.removeChild(_this._levelText);
+                        _this.startRain();
+                    });
+                    _this.addChild(_this._levelText);
+                }, 200);
             };
             GameScene.prototype.removeShape = function () {
                 var _this = this;

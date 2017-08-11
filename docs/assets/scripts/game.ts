@@ -528,18 +528,27 @@ namespace BubbleGunner.Game {
         }
 
         public start(...args: any[]): void {
-            this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
-            this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
-
             this._mouseMoveListener = this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this._mouseUpListener = this.stage.on(`stagemouseup`, this.handleClick, this);
 
             this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
 
             this.playBackgroundMusic();
+
+            this.startRain();
         }
 
-        public changeGameScene(toScene: SceneType): void {
+        private startRain(): void {
+            this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
+            this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
+        }
+
+        private stopRain(): void {
+            clearInterval(this._animalRainInterval);
+            clearInterval(this._lavaRainInterval);
+        }
+
+        private changeGameScene(toScene: SceneType): void {
             this.off(`tick`, this._tickListener);
             this.stage.off(`stagemousemove`, this._mouseMoveListener);
             this.stage.off(`stagemouseup`, this._mouseUpListener);
@@ -548,8 +557,7 @@ namespace BubbleGunner.Game {
             this._pauseButton.off(`click`, this._pauseButtonListener);
             this._levelManager.off(LevelManager.EventLevelChanged, this._levelListener);
 
-            clearInterval(this._animalRainInterval);
-            clearInterval(this._lavaRainInterval);
+            this.stopRain();
 
             this._bgMusic.stop();
             this.removeAllChildren();
@@ -648,19 +656,34 @@ namespace BubbleGunner.Game {
         }
 
         private showLevelChangedDemo(): void {
-            // ToDo: Wait for all object on scene to fall/ascend
-            // ToDo: Pause the falls for a 2 seconds
+            this.stopRain();
 
-            this._levelText = new Text(); // ToDo: font, size
-            this._levelText.text = `Level ${this._levelManager.currentLevel}`;
-            this._levelText.x = NormalWidth / 2;
-            this._levelText.y = NormalHeight / 2;
+            let intervalHandler: number;
+            intervalHandler = setInterval(() => {
+                if (this._animals.length !== 0) return;
+                clearInterval(intervalHandler);
 
-            // ToDo: Animate text for 2 seconds
+                this._levelText = new Text(undefined, `bold 24px serif`, `yellow`); // ToDo: font, size
+                this._levelText.text = `Level ${this._levelManager.currentLevel}`;
+                this._levelText.regX = this._levelText.getMeasuredWidth() / 2;
+                this._levelText.regY = this._levelText.getMeasuredHeight() / 2;
 
-            this.addChild(this._levelText);
+                this._levelText.x = NormalWidth / 2;
+                this._levelText.y = NormalHeight / 2;
 
-            // ToDo: Start the level
+                Tween.get(this._levelText)
+                    .to({
+                        scaleX: 5,
+                        scaleY: 5,
+                        alpha: 0
+                    }, 2.5 * 1000)
+                    .call(() => {
+                        this.removeChild(this._levelText);
+                        this.startRain();
+                    });
+
+                this.addChild(this._levelText);
+            }, 200);
         }
 
         private removeShape(...shapes: Shape[]): void {
