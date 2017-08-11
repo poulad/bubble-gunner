@@ -81,7 +81,7 @@ namespace BubbleGunner.Game {
         }
     }
 
-    class Lava extends Shape {
+    class LavaPiece extends Shape {
         public static EventFell: string = `fell`;
         private static Speed: number = 400;
 
@@ -95,7 +95,7 @@ namespace BubbleGunner.Game {
             super();
             this.graphics
                 .beginFill('red')
-                .drawRect(0, 0, Lava.Width, Lava.Height);
+                .drawRect(0, 0, LavaPiece.Width, LavaPiece.Height);
 
             this.startPoint = new Point(startX, 0);
             this.x = this.startPoint.x;
@@ -109,8 +109,8 @@ namespace BubbleGunner.Game {
                 .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
-                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Lava.Speed))
-                .call(() => this.dispatchEvent(new Event(Lava.EventFell)));
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, LavaPiece.Speed))
+                .call(() => this.dispatchEvent(new Event(LavaPiece.EventFell)));
         }
     }
 
@@ -475,7 +475,7 @@ namespace BubbleGunner.Game {
         private _bgMusic: AbstractSoundInstance;
         private _animals: Animal[] = [];
         private _bubbles: Bubble[] = [];
-        private _lavas: Lava[] = [];
+        private _lavaPieces: LavaPiece[] = [];
         private _levelText: Text;
         private _isShapesLockFree: boolean = true;
 
@@ -562,7 +562,7 @@ namespace BubbleGunner.Game {
             this._bgMusic.stop();
             this.removeAllChildren();
 
-            this._bubbles.length = this._animals.length = this._lavas.length = 0;
+            this._bubbles.length = this._animals.length = this._lavaPieces.length = 0;
 
             // ToDo: Clear up all events handlers, and etc
 
@@ -593,13 +593,13 @@ namespace BubbleGunner.Game {
 
         private handleLavaRainInterval() {
             let throwLava: Function = () => {
-                let lava = new Lava(GameScene.getRandomX());
-                this.lockShapes(() => this._lavas.push(lava));
+                let lava = new LavaPiece(GameScene.getRandomX());
+                this.lockShapes(() => this._lavaPieces.push(lava));
                 this.addChild(lava);
                 this.setChildIndex(lava, 2);
-                console.debug(this._lavas);
+                console.debug(this._lavaPieces);
 
-                lava.on(Lava.EventFell, () => this.removeShape(lava), this);
+                lava.on(LavaPiece.EventFell, () => this.removeShape(lava), this);
                 lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
@@ -701,11 +701,11 @@ namespace BubbleGunner.Game {
                             .filter(a => a !== shape && a != undefined);
 
                         console.debug(this._animals);
-                    } else if (shape instanceof Lava) {
-                        this._lavas = this._lavas
+                    } else if (shape instanceof LavaPiece) {
+                        this._lavaPieces = this._lavaPieces
                             .filter(l => l !== shape && l != undefined);
 
-                        console.debug(this._lavas);
+                        console.debug(this._lavaPieces);
                     } else {
                         console.warn(`Unknown type to remove: ${shape}`);
                     }
@@ -719,7 +719,7 @@ namespace BubbleGunner.Game {
 
             this.lockShapes(() => {
                 this._bubbles
-                    .filter(this.isCollidingWithAnyLava(this._lavas))
+                    .filter(this.isCollidingWithAnyLava(this._lavaPieces))
                     .forEach((b: Bubble) => {
                             b.pop();
                             console.debug("hit lava!");
@@ -777,7 +777,7 @@ namespace BubbleGunner.Game {
             return animals.filter(isAnimalColliding);
         }
 
-        private isCollidingWithAnyLava(lavas: Lava[]) {
+        private isCollidingWithAnyLava(lavas: LavaPiece[]) {
             return (b: Bubble) => (lavas
                 .filter(l => Math.sqrt(Math.pow(b.y - l.y, 2) + Math.pow(b.x - l.x, 2)) < 30)
                 .length > 0);

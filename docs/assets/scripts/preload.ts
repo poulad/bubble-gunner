@@ -39,6 +39,12 @@ namespace BubbleGunner.Menu {
                 {id: `dragon-hand`, src: `images/dragon-hand.png`},
                 {id: `volcano`, src: `images/volcano.png`},
                 {id: `heart`, src: `images/heart.png`},
+
+                // Menu
+                {id: `menu-volcano`, src: `images/volcano-menu.png`},
+                {id: `menu-start`, src: `images/start.png`},
+                {id: `menu-help`, src: `images/help.png`},
+
                 {id: `back`, src: `images/back.png`},
                 {id: `pause`, src: `images/pause.png`},
                 {id: `refresh`, src: `images/refresh.png`},

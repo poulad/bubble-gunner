@@ -13,37 +13,35 @@ var BubbleGunner;
     var Menu;
     (function (Menu) {
         var Shape = createjs.Shape;
-        var Text = createjs.Text;
+        var Bitmap = createjs.Bitmap;
+        var Graphics = createjs.Graphics;
+        var Tween = createjs.Tween;
         var MenuScene = (function (_super) {
             __extends(MenuScene, _super);
             function MenuScene() {
                 var _this = _super.call(this) || this;
-                _this._btnStartGame = new Shape();
-                _this._btnStartGame.graphics
-                    .beginStroke("yellow")
-                    .beginFill("#eee")
-                    .drawRect(0, 0, 120, 80);
-                _this._btnStartGame.x = 360;
-                _this._btnStartGame.y = 100;
-                var startGameText = new Text("Start Game", "10pt Calibri", "red");
-                startGameText.x = 370;
-                startGameText.y = 120;
+                _this.scale = 0;
+                var bgColor = new Graphics()
+                    .beginFill('lightblue')
+                    .drawRect(0, 0, BubbleGunner.NormalWidth, BubbleGunner.NormalHeight);
+                _this.addChild(new Shape(bgColor));
+                var bgImage = new Bitmap(BubbleGunner.loader.getResult("menu-volcano"));
+                _this.addChild(bgImage);
+                _this._btnStartGame = new Bitmap(BubbleGunner.loader.getResult("menu-start"));
+                _this._btnStartGame.regX = _this._btnStartGame.image.width / 2;
+                _this._btnStartGame.regY = _this._btnStartGame.image.height / 2;
+                _this._btnStartGame.x = BubbleGunner.NormalWidth / 2;
+                _this._btnStartGame.y = BubbleGunner.NormalHeight / 2 - 100;
                 _this._btnStartGame.cursor = "pointer";
-                _this._btnStartGame.on("click", _this.dispatchStartGameEvent, _this);
-                _this._btnStartHelp = new Shape();
-                _this._btnStartHelp.graphics
-                    .beginStroke("blue")
-                    .beginFill("#eee")
-                    .drawRect(0, 0, 120, 80);
-                _this._btnStartHelp.x = 360;
-                _this._btnStartHelp.y = 200;
-                var startHelpText = new Text("Help", "20pt Calibri", "blue");
-                startHelpText.x = _this._btnStartHelp.x + startHelpText.getMeasuredWidth() / 2;
-                startHelpText.y = _this._btnStartHelp.y + startHelpText.getMeasuredHeight() / 2;
+                setInterval(_this.pulse.bind(_this), 120);
+                _this._btnStartGame.on("click", _this.changeToGameScene, _this);
+                _this._btnStartHelp = new Bitmap(BubbleGunner.loader.getResult("menu-help"));
+                _this._btnStartHelp.x = 50;
+                _this._btnStartHelp.y = BubbleGunner.NormalHeight - _this._btnStartHelp.image.height - 50;
                 _this._btnStartHelp.cursor = "pointer";
                 _this._btnStartHelp.on("click", _this.dispatchStartHelpEvent, _this);
-                _this.addChild(_this._btnStartGame, startGameText);
-                _this.addChild(_this._btnStartHelp, startHelpText);
+                _this.addChild(_this._btnStartGame);
+                _this.addChild(_this._btnStartHelp);
                 return _this;
             }
             MenuScene.prototype.start = function () {
@@ -52,11 +50,29 @@ var BubbleGunner;
                     args[_i] = arguments[_i];
                 }
             };
-            MenuScene.prototype.dispatchStartGameEvent = function () {
-                this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Game));
+            MenuScene.prototype.changeToGameScene = function () {
+                var _this = this;
+                Tween.get(this)
+                    .to({
+                    alpha: 0,
+                    scaleX: 10,
+                    scaleY: 10
+                }, 2 * 1000)
+                    .call(function () {
+                    _this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Game));
+                });
             };
             MenuScene.prototype.dispatchStartHelpEvent = function () {
                 this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Help));
+            };
+            MenuScene.prototype.pulse = function () {
+                var newScale = this._btnStartGame.scaleX + 0.05;
+                if (newScale >= 1.2)
+                    newScale = 1;
+                Tween.get(this._btnStartGame).to({
+                    scaleX: newScale,
+                    scaleY: newScale
+                }, 110);
             };
             return MenuScene;
         }(BubbleGunner.Scene));

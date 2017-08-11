@@ -81,33 +81,33 @@ var BubbleGunner;
             Animal.Speed = 330;
             return Animal;
         }(Shape));
-        var Lava = (function (_super) {
-            __extends(Lava, _super);
-            function Lava(startX) {
+        var LavaPiece = (function (_super) {
+            __extends(LavaPiece, _super);
+            function LavaPiece(startX) {
                 var _this = _super.call(this) || this;
                 _this.graphics
                     .beginFill('red')
-                    .drawRect(0, 0, Lava.Width, Lava.Height);
+                    .drawRect(0, 0, LavaPiece.Width, LavaPiece.Height);
                 _this.startPoint = new Point(startX, 0);
                 _this.x = _this.startPoint.x;
                 _this.y = _this.startPoint.y;
                 return _this;
             }
-            Lava.prototype.moveTo = function (point) {
+            LavaPiece.prototype.moveTo = function (point) {
                 var _this = this;
                 this.endPoint = point;
                 return Tween.get(this)
                     .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
-                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Lava.Speed))
-                    .call(function () { return _this.dispatchEvent(new Event(Lava.EventFell)); });
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, LavaPiece.Speed))
+                    .call(function () { return _this.dispatchEvent(new Event(LavaPiece.EventFell)); });
             };
-            Lava.EventFell = "fell";
-            Lava.Speed = 400;
-            Lava.Width = 25;
-            Lava.Height = 20;
-            return Lava;
+            LavaPiece.EventFell = "fell";
+            LavaPiece.Speed = 400;
+            LavaPiece.Width = 25;
+            LavaPiece.Height = 20;
+            return LavaPiece;
         }(Shape));
         var Bubble = (function (_super) {
             __extends(Bubble, _super);
@@ -416,7 +416,7 @@ var BubbleGunner;
                 _this._levelManager = new LevelManager();
                 _this._animals = [];
                 _this._bubbles = [];
-                _this._lavas = [];
+                _this._lavaPieces = [];
                 _this._isShapesLockFree = true;
                 var bgColor = new Shape();
                 bgColor.graphics
@@ -478,7 +478,7 @@ var BubbleGunner;
                 this.stopRain();
                 this._bgMusic.stop();
                 this.removeAllChildren();
-                this._bubbles.length = this._animals.length = this._lavas.length = 0;
+                this._bubbles.length = this._animals.length = this._lavaPieces.length = 0;
                 // ToDo: Clear up all events handlers, and etc
                 switch (toScene) {
                     case BubbleGunner.SceneType.Menu:
@@ -506,12 +506,12 @@ var BubbleGunner;
             GameScene.prototype.handleLavaRainInterval = function () {
                 var _this = this;
                 var throwLava = function () {
-                    var lava = new Lava(GameScene.getRandomX());
-                    _this.lockShapes(function () { return _this._lavas.push(lava); });
+                    var lava = new LavaPiece(GameScene.getRandomX());
+                    _this.lockShapes(function () { return _this._lavaPieces.push(lava); });
                     _this.addChild(lava);
                     _this.setChildIndex(lava, 2);
-                    console.debug(_this._lavas);
-                    lava.on(Lava.EventFell, function () { return _this.removeShape(lava); }, _this);
+                    console.debug(_this._lavaPieces);
+                    lava.on(LavaPiece.EventFell, function () { return _this.removeShape(lava); }, _this);
                     lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.NormalHeight));
                 };
                 // console.debug(`level: ${this._levelManager.currentLevel}`);
@@ -607,10 +607,10 @@ var BubbleGunner;
                                 .filter(function (a) { return a !== shape && a != undefined; });
                             console.debug(_this._animals);
                         }
-                        else if (shape instanceof Lava) {
-                            _this._lavas = _this._lavas
+                        else if (shape instanceof LavaPiece) {
+                            _this._lavaPieces = _this._lavaPieces
                                 .filter(function (l) { return l !== shape && l != undefined; });
-                            console.debug(_this._lavas);
+                            console.debug(_this._lavaPieces);
                         }
                         else {
                             console.warn("Unknown type to remove: " + shape);
@@ -628,7 +628,7 @@ var BubbleGunner;
                     return;
                 this.lockShapes(function () {
                     _this._bubbles
-                        .filter(_this.isCollidingWithAnyLava(_this._lavas))
+                        .filter(_this.isCollidingWithAnyLava(_this._lavaPieces))
                         .forEach(function (b) {
                         b.pop();
                         console.debug("hit lava!");

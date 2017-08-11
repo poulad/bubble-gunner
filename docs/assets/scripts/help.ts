@@ -11,6 +11,7 @@ namespace BubbleGunner.Help {
             back.y = 30;
             back.on(`click`, this.dispatchBackToMenuEvent, this);
             back.cursor = `pointer`;
+            back.scaleX = back.scaleY = 1.5;
             this.addChild(back);
         }
 

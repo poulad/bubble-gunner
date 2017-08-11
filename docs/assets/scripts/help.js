@@ -22,6 +22,7 @@ var BubbleGunner;
                 back.y = 30;
                 back.on("click", _this.dispatchBackToMenuEvent, _this);
                 back.cursor = "pointer";
+                back.scaleX = back.scaleY = 1.5;
                 _this.addChild(back);
                 return _this;
             }
