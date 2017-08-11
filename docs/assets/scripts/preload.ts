@@ -3,6 +3,7 @@ namespace BubbleGunner.Menu {
     import Text = createjs.Text;
     import Tween = createjs.Tween;
     import LoadQueue = createjs.LoadQueue;
+    import Sound = createjs.Sound;
 
     export class PreloadScene extends Scene {
         private _circle: Shape;
@@ -31,11 +32,12 @@ namespace BubbleGunner.Menu {
         public start(...args: any[]): void {
             loader = new LoadQueue(true, `assets/`);
             loader.installPlugin(createjs.Sound);
+            Sound.alternateExtensions = ["mp3"];
             loader.on(`progress`, this.updateProgress, this);
             loader.on(`complete`, this.changeToMenuScene, this);
 
             loader.loadManifest([
-                {id: `sound-button`, src: `sounds/button.wav`},
+                {id: `sound-button`, src: `sounds/button.ogg`},
 
                 {id: `dragon`, src: `images/dragon.png`},
                 {id: `dragon-hand`, src: `images/dragon-hand.png`},
@@ -53,9 +55,9 @@ namespace BubbleGunner.Menu {
                 {id: `refresh`, src: `images/refresh.png`},
                 {id: `scoresbar`, src: `images/scoresbar.png`},
                 // Game - Sounds
-                {id: `game-bgm`, src: `sounds/bgm.mp3`},
-                {id: `game-bubble-shoot`, src: `sounds/bubble-shoot.wav`},
-                {id: `game-lava-fall`, src: `sounds/lava-fall.wav`},
+                {id: `game-bgm`, src: `sounds/bgm.ogg`},
+                {id: `game-bubble-shoot`, src: `sounds/bubble-shoot.ogg`},
+                {id: `game-lava-fall`, src: `sounds/lava-fall.ogg`},
             ]);
         }
 

@@ -16,6 +16,7 @@ var BubbleGunner;
         var Text = createjs.Text;
         var Tween = createjs.Tween;
         var LoadQueue = createjs.LoadQueue;
+        var Sound = createjs.Sound;
         var PreloadScene = (function (_super) {
             __extends(PreloadScene, _super);
             function PreloadScene() {
@@ -40,10 +41,11 @@ var BubbleGunner;
                 }
                 BubbleGunner.loader = new LoadQueue(true, "assets/");
                 BubbleGunner.loader.installPlugin(createjs.Sound);
+                Sound.alternateExtensions = ["mp3"];
                 BubbleGunner.loader.on("progress", this.updateProgress, this);
                 BubbleGunner.loader.on("complete", this.changeToMenuScene, this);
                 BubbleGunner.loader.loadManifest([
-                    { id: "sound-button", src: "sounds/button.wav" },
+                    { id: "sound-button", src: "sounds/button.ogg" },
                     { id: "dragon", src: "images/dragon.png" },
                     { id: "dragon-hand", src: "images/dragon-hand.png" },
                     { id: "volcano", src: "images/volcano.png" },
@@ -58,9 +60,9 @@ var BubbleGunner;
                     { id: "refresh", src: "images/refresh.png" },
                     { id: "scoresbar", src: "images/scoresbar.png" },
                     // Game - Sounds
-                    { id: "game-bgm", src: "sounds/bgm.mp3" },
-                    { id: "game-bubble-shoot", src: "sounds/bubble-shoot.wav" },
-                    { id: "game-lava-fall", src: "sounds/lava-fall.wav" },
+                    { id: "game-bgm", src: "sounds/bgm.ogg" },
+                    { id: "game-bubble-shoot", src: "sounds/bubble-shoot.ogg" },
+                    { id: "game-lava-fall", src: "sounds/lava-fall.ogg" },
                 ]);
             };
             PreloadScene.prototype.updateProgress = function (evt) {
