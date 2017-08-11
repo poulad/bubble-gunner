@@ -43,6 +43,7 @@ var BubbleGunner;
                 BubbleGunner.loader.on("progress", this.updateProgress, this);
                 BubbleGunner.loader.on("complete", this.changeToMenuScene, this);
                 BubbleGunner.loader.loadManifest([
+                    { id: "sound-button", src: "sounds/button.wav" },
                     { id: "dragon", src: "images/dragon.png" },
                     { id: "dragon-hand", src: "images/dragon-hand.png" },
                     { id: "volcano", src: "images/volcano.png" },
@@ -51,11 +52,15 @@ var BubbleGunner;
                     { id: "menu-volcano", src: "images/volcano-menu.png" },
                     { id: "menu-start", src: "images/start.png" },
                     { id: "menu-help", src: "images/help.png" },
+                    // Game - Images
                     { id: "back", src: "images/back.png" },
                     { id: "pause", src: "images/pause.png" },
                     { id: "refresh", src: "images/refresh.png" },
                     { id: "scoresbar", src: "images/scoresbar.png" },
-                    { id: "bgm", src: "sounds/bgm.mp3" },
+                    // Game - Sounds
+                    { id: "game-bgm", src: "sounds/bgm.mp3" },
+                    { id: "game-bubble-shoot", src: "sounds/bubble-shoot.wav" },
+                    { id: "game-lava-fall", src: "sounds/lava-fall.wav" },
                 ]);
             };
             PreloadScene.prototype.updateProgress = function (evt) {

@@ -1,14 +1,13 @@
 namespace BubbleGunner.Menu {
     import Shape = createjs.Shape;
-    import Text = createjs.Text;
     import Bitmap = createjs.Bitmap;
     import Graphics = createjs.Graphics;
     import Tween = createjs.Tween;
+    import Sound = createjs.Sound;
 
     export class MenuScene extends Scene {
         private _btnStartGame: Bitmap;
-        private _btnStartHelp: Bitmap;
-        private scale: number = 0;
+        private _btnHelp: Bitmap;
 
         constructor() {
             super();
@@ -28,23 +27,24 @@ namespace BubbleGunner.Menu {
             this._btnStartGame.y = NormalHeight / 2 - 100;
             this._btnStartGame.cursor = `pointer`;
             setInterval(this.pulse.bind(this), 120);
-            this._btnStartGame.on(`click`, this.changeToGameScene, this);
+            this._btnStartGame.on(`click`, this.onStartButtonClick, this);
 
-            this._btnStartHelp = new Bitmap(loader.getResult(`menu-help`));
-            this._btnStartHelp.x = 50;
-            this._btnStartHelp.y = NormalHeight - this._btnStartHelp.image.height - 50;
-            this._btnStartHelp.cursor = "pointer";
-            this._btnStartHelp.on("click", this.dispatchStartHelpEvent, this);
+            this._btnHelp = new Bitmap(loader.getResult(`menu-help`));
+            this._btnHelp.x = 50;
+            this._btnHelp.y = NormalHeight - this._btnHelp.image.height - 50;
+            this._btnHelp.cursor = "pointer";
+            this._btnHelp.on("click", this.onHelpButtonClick, this);
 
             this.addChild(this._btnStartGame);
-            this.addChild(this._btnStartHelp);
+            this.addChild(this._btnHelp);
         }
 
         public start(...args: any[]): void {
 
         }
 
-        private changeToGameScene(): void {
+        private onStartButtonClick(): void {
+            Sound.play(`sound-button`);
             Tween.get(this)
                 .to({
                     alpha: 0,
@@ -56,7 +56,8 @@ namespace BubbleGunner.Menu {
                 });
         }
 
-        private dispatchStartHelpEvent(): void {
+        private onHelpButtonClick(): void {
+            Sound.play(`sound-button`);
             this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Help));
         }
 
@@ -68,6 +69,10 @@ namespace BubbleGunner.Menu {
                 scaleX: newScale,
                 scaleY: newScale
             }, 110);
+
+            let newAlpha = this._btnHelp.alpha - .08;
+            if (newAlpha < .9) newAlpha = 1;
+            Tween.get(this._btnHelp).to({alpha: newAlpha}, 110);
         }
     }
 }

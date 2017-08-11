@@ -299,7 +299,7 @@ var BubbleGunner;
                 // console.debug(`Gun muzzle at: ${p}`);
                 return p;
             };
-            Dragon.FireRate = 300;
+            Dragon.FireRate = 650;
             return Dragon;
         }(Container));
         var LevelManager = (function (_super) {
@@ -442,7 +442,10 @@ var BubbleGunner;
                 _this._pauseButton.x = 30;
                 _this._pauseButton.y = BubbleGunner.NormalHeight - _this._pauseButton.getBounds().height - 30;
                 _this._pauseButton.cursor = "pointer";
-                _this._pauseButtonListener = _this._pauseButton.on("click", _this.changeGameScene.bind(_this, BubbleGunner.SceneType.Menu));
+                _this._pauseButtonListener = _this._pauseButton.on("click", function () {
+                    Sound.play("sound-button");
+                    _this.changeGameScene(BubbleGunner.SceneType.Menu);
+                }, _this);
                 _this.addChild(_this._pauseButton);
                 _this.setChildIndex(_this._pauseButton, 3);
                 _this._tickListener = _this.on("tick", _this.handleTick, _this);
@@ -520,6 +523,7 @@ var BubbleGunner;
                     console.debug(_this._lavaPieces);
                     lava.on(LavaPiece.EventFell, function () { return _this.removeShape(lava); }, _this);
                     lava.moveTo(new Point(GameScene.getRandomX(), BubbleGunner.NormalHeight));
+                    Sound.play("game-lava-fall");
                 };
                 // console.debug(`level: ${this._levelManager.currentLevel}`);
                 switch (this._levelManager.currentLevel) {
@@ -531,7 +535,7 @@ var BubbleGunner;
                         break;
                     case 3:
                         throwLava();
-                        setTimeout(throwLava, 900);
+                        setTimeout(throwLava, 1.2 * 1000);
                         break;
                     default:
                         throw "Invalid level: " + this._levelManager.currentLevel;
@@ -540,6 +544,9 @@ var BubbleGunner;
             GameScene.prototype.handleClick = function (evt) {
                 var _this = this;
                 if (!this._dragon.isReadyToShoot())
+                    return;
+                var pauseBtnLocalPoint = this._pauseButton.globalToLocal(this.stage.mouseX, this.stage.mouseY);
+                if (this._pauseButton.hitTest(pauseBtnLocalPoint.x, pauseBtnLocalPoint.y))
                     return;
                 var stagePoint = new Point(evt.stageX / this.stage.scaleX, evt.stageY / this.stage.scaleY);
                 var bubble = this._dragon.shootBubbleTo(stagePoint);
@@ -555,12 +562,13 @@ var BubbleGunner;
                     _this._scoresBar.increaseScore();
                     _this.removeShape(bubble.getAnimal(), bubble);
                 }, this);
+                Sound.play("game-bubble-shoot");
                 bubble.move();
             };
             GameScene.prototype.playBackgroundMusic = function () {
-                this._bgMusic = Sound.play("bgm");
+                this._bgMusic = Sound.play("game-bgm");
                 this._bgMusicListener = this._bgMusic.on("complete", this.playBackgroundMusic, this);
-                this._bgMusic.volume = 1;
+                this._bgMusic.volume = .5;
                 this._bgMusic.pan = .5;
             };
             GameScene.prototype.handleAnimalFall = function (evt) {

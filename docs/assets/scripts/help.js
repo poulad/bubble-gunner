@@ -13,6 +13,7 @@ var BubbleGunner;
     var Help;
     (function (Help) {
         var Bitmap = createjs.Bitmap;
+        var Sound = createjs.Sound;
         var HelpScene = (function (_super) {
             __extends(HelpScene, _super);
             function HelpScene() {
@@ -33,6 +34,7 @@ var BubbleGunner;
                 }
             };
             HelpScene.prototype.dispatchBackToMenuEvent = function () {
+                Sound.play("sound-button");
                 this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Menu));
             };
             return HelpScene;

@@ -1,5 +1,6 @@
 namespace BubbleGunner.Help {
     import Bitmap = createjs.Bitmap;
+    import Sound = createjs.Sound;
 
     export class HelpScene extends Scene {
 
@@ -20,6 +21,7 @@ namespace BubbleGunner.Help {
         }
 
         private dispatchBackToMenuEvent(): void {
+            Sound.play(`sound-button`);
             this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu));
         }
     }

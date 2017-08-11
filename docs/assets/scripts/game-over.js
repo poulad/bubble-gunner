@@ -15,6 +15,7 @@ var BubbleGunner;
         var Bitmap = createjs.Bitmap;
         var Tween = createjs.Tween;
         var Text = createjs.Text;
+        var Sound = createjs.Sound;
         var GameOverScene = (function (_super) {
             __extends(GameOverScene, _super);
             function GameOverScene() {
@@ -43,6 +44,7 @@ var BubbleGunner;
                 this._pulseIntervalHandle = setInterval(this.pulse.bind(this), 60);
             };
             GameOverScene.prototype.dispatchPlayGameEvent = function () {
+                Sound.play("sound-button");
                 clearInterval(this._pulseIntervalHandle);
                 this.dispatchEvent(new BubbleGunner.SceneEvent(BubbleGunner.Scene.EventChangeScene, BubbleGunner.SceneType.Game));
             };

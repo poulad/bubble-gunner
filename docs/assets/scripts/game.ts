@@ -249,7 +249,7 @@ namespace BubbleGunner.Game {
         public originalWidth = 140;
         public originalHeight = 408;
 
-        private static FireRate: number = 300;
+        private static FireRate: number = 650;
 
         private _body: Bitmap;
         private _hand: DragonHand;
@@ -520,7 +520,10 @@ namespace BubbleGunner.Game {
             this._pauseButton.x = 30;
             this._pauseButton.y = NormalHeight - this._pauseButton.getBounds().height - 30;
             this._pauseButton.cursor = `pointer`;
-            this._pauseButtonListener = this._pauseButton.on(`click`, this.changeGameScene.bind(this, SceneType.Menu));
+            this._pauseButtonListener = this._pauseButton.on(`click`, () => {
+                Sound.play(`sound-button`);
+                this.changeGameScene(SceneType.Menu);
+            }, this);
             this.addChild(this._pauseButton);
             this.setChildIndex(this._pauseButton, 3);
 
@@ -609,6 +612,7 @@ namespace BubbleGunner.Game {
 
                 lava.on(LavaPiece.EventFell, () => this.removeShape(lava), this);
                 lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
+                Sound.play(`game-lava-fall`);
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
             switch (this._levelManager.currentLevel) {
@@ -620,19 +624,23 @@ namespace BubbleGunner.Game {
                     break;
                 case 3:
                     throwLava();
-                    setTimeout(throwLava, 900);
+                    setTimeout(throwLava, 1.2 * 1000);
                     break;
                 default:
                     throw `Invalid level: ${this._levelManager.currentLevel}`;
             }
         }
 
-        private handleClick(evt: createjs.MouseEvent): void {
+        private handleClick(evt: MouseEvent): void {
             if (!this._dragon.isReadyToShoot()) return;
+
+            let pauseBtnLocalPoint = this._pauseButton.globalToLocal(this.stage.mouseX, this.stage.mouseY);
+            if (this._pauseButton.hitTest(pauseBtnLocalPoint.x, pauseBtnLocalPoint.y)) return;
 
             let stagePoint = new Point(
                 evt.stageX / this.stage.scaleX,
                 evt.stageY / this.stage.scaleY);
+
             let bubble = this._dragon.shootBubbleTo(stagePoint);
             this.lockShapes(() => {
                 this._bubbles.push(bubble);
@@ -647,13 +655,15 @@ namespace BubbleGunner.Game {
                 this._scoresBar.increaseScore();
                 this.removeShape(bubble.getAnimal(), bubble);
             }, this);
+
+            Sound.play(`game-bubble-shoot`);
             bubble.move();
         }
 
         private playBackgroundMusic(): void {
-            this._bgMusic = Sound.play(`bgm`);
+            this._bgMusic = Sound.play(`game-bgm`);
             this._bgMusicListener = this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
-            this._bgMusic.volume = 1;
+            this._bgMusic.volume = .5;
             this._bgMusic.pan = .5;
         }
 
