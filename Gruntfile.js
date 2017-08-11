@@ -40,7 +40,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks("grunt-contrib-uglify");
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.registerTask("default", [
-        "ts:bubbleGunner",
+        // "ts:bubbleGunner",
         "concat:bubbleGunner",
         "uglify:bubbleGunner",
         "clean:bubbleGunner"
