@@ -453,6 +453,13 @@ var BubbleGunner;
                 for (var _i = 0; _i < arguments.length; _i++) {
                     args[_i] = arguments[_i];
                 }
+                this.alpha = -1;
+                this.scaleX = this.scaleY = 10;
+                Tween.get(this).to({
+                    scaleX: 1,
+                    scaleY: 1,
+                    alpha: 1
+                }, 1000);
                 this._mouseMoveListener = this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
                 this._mouseUpListener = this.stage.on("stagemouseup", this.handleClick, this);
                 this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
