@@ -480,7 +480,6 @@ namespace BubbleGunner.Game {
         private _bubbles: Bubble[] = [];
         private _lavas: Lava[] = [];
         private _isShapesLockFree: boolean = true;
-
         private _animalRainInterval: number;
         private _lavaRainInterval: number;
         private _tickListener: Function;
