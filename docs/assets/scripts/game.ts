@@ -19,7 +19,7 @@ namespace BubbleGunner.Game {
         return Math.sqrt(Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2));
     }
 
-    export function getTweenDurationMSecs(p1: Point, p2: Point, speed: number = 180): number {
+    export function getTweenDurationMSecs(p1: Point, p2: Point, speed: number): number {
         return Math.floor(findDistance(p1, p2) * 1000 / speed);
     }
 
@@ -40,10 +40,10 @@ namespace BubbleGunner.Game {
     class Animal extends Shape {
         public static EventFell: string = `fell`;
         public static Radius: number = 22;
+        public static Speed: number = 330;
 
         public startPoint: Point;
         public endPoint: Point;
-        public speed: number;
 
         constructor(point: Point) {
             super();
@@ -64,7 +64,7 @@ namespace BubbleGunner.Game {
                 .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
-                }, getTweenDurationMSecs(this.startPoint, this.endPoint))
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Animal.Speed))
                 .call(this.fallCallback.bind(this));
         }
 
@@ -254,7 +254,8 @@ namespace BubbleGunner.Game {
         private _body: Bitmap;
         private _hand: DragonHand;
         private _canShoot: boolean = true;
-        private _timer: number;
+        private _gunFireTimeoutHandle: number;
+
         constructor() {
             super();
             this._body = new Bitmap(loader.getResult(`dragon`));
@@ -283,20 +284,16 @@ namespace BubbleGunner.Game {
                     scaleX: targetScale,
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
-            this.setGunTimeout(Dragon.FireRate);
+            this.setGunFireDelay(Dragon.FireRate);
             return bubble;
         }
 
-        public getTimer(): number {
-            return this._timer;
-        }
+        public setGunFireDelay(time: number) {
+            clearTimeout(this._gunFireTimeoutHandle);
 
-        public setGunTimeout(time: number) {
             this._canShoot = false;
-            this._timer = setTimeout(() => {
-                if (this) {
-                    this._canShoot = true;
-                }
+            this._gunFireTimeoutHandle = setTimeout(() => {
+                if (this != undefined) this._canShoot = true;
             }, time);
         }
 
@@ -479,6 +476,7 @@ namespace BubbleGunner.Game {
         private _animals: Animal[] = [];
         private _bubbles: Bubble[] = [];
         private _lavas: Lava[] = [];
+        private _levelText: Text;
         private _isShapesLockFree: boolean = true;
 
         private _animalRainInterval: number;
@@ -489,6 +487,7 @@ namespace BubbleGunner.Game {
         private _scoresBarListener: Function;
         private _pauseButtonListener: Function;
         private _bgMusicListener: Function;
+        private _levelListener: Function;
 
         constructor() {
             super();
@@ -535,6 +534,8 @@ namespace BubbleGunner.Game {
             this._mouseMoveListener = this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
             this._mouseUpListener = this.stage.on(`stagemouseup`, this.handleClick, this);
 
+            this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
+
             this.playBackgroundMusic();
         }
 
@@ -545,6 +546,7 @@ namespace BubbleGunner.Game {
             this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
             this._bgMusic.off(`complete`, this._bgMusicListener);
             this._pauseButton.off(`click`, this._pauseButtonListener);
+            this._levelManager.off(LevelManager.EventLevelChanged, this._levelListener);
 
             clearInterval(this._animalRainInterval);
             clearInterval(this._lavaRainInterval);
@@ -645,6 +647,22 @@ namespace BubbleGunner.Game {
             this.removeShape(animal);
         }
 
+        private showLevelChangedDemo(): void {
+            // ToDo: Wait for all object on scene to fall/ascend
+            // ToDo: Pause the falls for a 2 seconds
+
+            this._levelText = new Text(); // ToDo: font, size
+            this._levelText.text = `Level ${this._levelManager.currentLevel}`;
+            this._levelText.x = NormalWidth / 2;
+            this._levelText.y = NormalHeight / 2;
+
+            // ToDo: Animate text for 2 seconds
+
+            this.addChild(this._levelText);
+
+            // ToDo: Start the level
+        }
+
         private removeShape(...shapes: Shape[]): void {
             this.lockShapes(() => {
                 for (let shape of shapes) {
@@ -680,12 +698,11 @@ namespace BubbleGunner.Game {
                 this._bubbles
                     .filter(this.isCollidingWithAnyLava(this._lavas))
                     .forEach((b: Bubble) => {
-                        b.pop();
-                        console.log("hit lava!");
-                        clearTimeout(this._dragon.getTimer());
-                        this._dragon.setGunTimeout(1000);
-                    }
-                );
+                            b.pop();
+                            console.debug("hit lava!");
+                            this._dragon.setGunFireDelay(1.5 * 1000);
+                        }
+                    );
 
                 this._bubbles
                     .filter(this.isNotCollidingWithOtherBubbles(this._bubbles))

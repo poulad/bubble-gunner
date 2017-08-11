@@ -29,7 +29,6 @@ var BubbleGunner;
         }
         Game.findDistance = findDistance;
         function getTweenDurationMSecs(p1, p2, speed) {
-            if (speed === void 0) { speed = 180; }
             return Math.floor(findDistance(p1, p2) * 1000 / speed);
         }
         Game.getTweenDurationMSecs = getTweenDurationMSecs;
@@ -64,7 +63,7 @@ var BubbleGunner;
                     .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
-                }, getTweenDurationMSecs(this.startPoint, this.endPoint))
+                }, getTweenDurationMSecs(this.startPoint, this.endPoint, Animal.Speed))
                     .call(this.fallCallback.bind(this));
             };
             Animal.prototype.continueFall = function () {
@@ -79,6 +78,7 @@ var BubbleGunner;
             };
             Animal.EventFell = "fell";
             Animal.Radius = 22;
+            Animal.Speed = 330;
             return Animal;
         }(Shape));
         var Lava = (function (_super) {
@@ -242,19 +242,16 @@ var BubbleGunner;
                     scaleX: targetScale,
                     scaleY: targetScale,
                 }, 150, Ease.bounceOut);
-                this.setGunTimeout(Dragon.FireRate);
+                this.setGunFireDelay(Dragon.FireRate);
                 return bubble;
             };
-            Dragon.prototype.getTimer = function () {
-                return this._timer;
-            };
-            Dragon.prototype.setGunTimeout = function (time) {
+            Dragon.prototype.setGunFireDelay = function (time) {
                 var _this = this;
+                clearTimeout(this._gunFireTimeoutHandle);
                 this._canShoot = false;
-                this._timer = setTimeout(function () {
-                    if (_this) {
+                this._gunFireTimeoutHandle = setTimeout(function () {
+                    if (_this != undefined)
                         _this._canShoot = true;
-                    }
                 }, time);
             };
             Dragon.prototype.aimGun = function (evt) {
@@ -460,6 +457,7 @@ var BubbleGunner;
                 this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
                 this._mouseMoveListener = this.stage.on("stagemousemove", this._dragon.aimGun, this._dragon);
                 this._mouseUpListener = this.stage.on("stagemouseup", this.handleClick, this);
+                this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
                 this.playBackgroundMusic();
             };
             GameScene.prototype.changeGameScene = function (toScene) {
@@ -469,6 +467,7 @@ var BubbleGunner;
                 this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
                 this._bgMusic.off("complete", this._bgMusicListener);
                 this._pauseButton.off("click", this._pauseButtonListener);
+                this._levelManager.off(LevelManager.EventLevelChanged, this._levelListener);
                 clearInterval(this._animalRainInterval);
                 clearInterval(this._lavaRainInterval);
                 this._bgMusic.stop();
@@ -556,6 +555,17 @@ var BubbleGunner;
                 this._scoresBar.decreaseRemainingLives();
                 this.removeShape(animal);
             };
+            GameScene.prototype.showLevelChangedDemo = function () {
+                // ToDo: Wait for all object on scene to fall/ascend
+                // ToDo: Pause the falls for a 2 seconds
+                this._levelText = new Text(); // ToDo: font, size
+                this._levelText.text = "Level " + this._levelManager.currentLevel;
+                this._levelText.x = BubbleGunner.NormalWidth / 2;
+                this._levelText.y = BubbleGunner.NormalHeight / 2;
+                // ToDo: Animate text for 2 seconds
+                this.addChild(this._levelText);
+                // ToDo: Start the level
+            };
             GameScene.prototype.removeShape = function () {
                 var _this = this;
                 var shapes = [];
@@ -599,9 +609,8 @@ var BubbleGunner;
                         .filter(_this.isCollidingWithAnyLava(_this._lavas))
                         .forEach(function (b) {
                         b.pop();
-                        console.log("hit lava!");
-                        clearTimeout(_this._dragon.getTimer());
-                        _this._dragon.setGunTimeout(1000);
+                        console.debug("hit lava!");
+                        _this._dragon.setGunFireDelay(1.5 * 1000);
                     });
                     _this._bubbles
                         .filter(_this.isNotCollidingWithOtherBubbles(_this._bubbles))
