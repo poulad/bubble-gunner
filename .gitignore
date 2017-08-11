@@ -8,8 +8,10 @@ typings/
 *.js
 *.js.map
 
-# Built files
 !server.js
 !Gruntfile.js
 !docs/assets/scripts/libs/*.js
 !docs/assets/scripts/bubble-gunner.min.js
+
+# Grunt-TS
+.tscache/
