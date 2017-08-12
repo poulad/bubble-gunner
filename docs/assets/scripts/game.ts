@@ -10,6 +10,7 @@ namespace BubbleGunner.Game {
     import Sound = createjs.Sound;
     import AbstractSoundInstance = createjs.AbstractSoundInstance;
     import Stage = createjs.Stage;
+    import DisplayObject = createjs.DisplayObject;
 
     export function hasCollisions(tuple: [Bubble, Animal[]]): boolean {
         return tuple[1].length > 0;
@@ -37,21 +38,18 @@ namespace BubbleGunner.Game {
         }
     }
 
-    class Animal extends Shape {
+    class Animal extends Bitmap {
         public static EventFell: string = `fell`;
-        public static Radius: number = 22;
+        public static Radius: number = 40;
         public static Speed: number = 330;
 
         public startPoint: Point;
         public endPoint: Point;
 
         constructor(point: Point) {
-            super();
+            super(Animal.getRandomAnimalImage());
 
-            this.graphics
-                .beginFill('lime')
-                .drawCircle(0, 0, Animal.Radius);
-
+            this.regX = this.regY = Animal.Radius;
             this.x = point.x;
             this.y = point.y;
             this.startPoint = point;
@@ -78,6 +76,11 @@ namespace BubbleGunner.Game {
             return Tween.get(this)
                 .to({alpha: .3}, 300)
                 .call(this.dispatchEvent.bind(this, Animal.EventFell));
+        }
+
+        private static getRandomAnimalImage(): Object {
+            let id = Math.floor(Math.random() * 34234) % 4;
+            return loader.getResult(`game-animal${id}`);
         }
     }
 
@@ -118,7 +121,7 @@ namespace BubbleGunner.Game {
         public static EventPopped: string = `popped`;
         public static EventAscended: string = `ascended`;
         public static EventRescuedAnimal: string = `rescued`;
-        public static Radius: number = 28;
+        public static Radius: number = 42;
 
         private static Speed: number = 450;
         private static AscendingSpeed: number = 100;
@@ -404,9 +407,9 @@ namespace BubbleGunner.Game {
             this.addChild(this._bar);
             this.setChildIndex(this._bar, 1);
 
-            this._scoreText = new Text(this._score.toString(), `20px Arial`, 'white');
+            this._scoreText = new Text(this._score.toString(), `20px Permanent Marker`, 'white');
             this._scoreText.x = this._mask.getBounds().width + 10;
-            this._scoreText.y = 0;
+
             this.addChild(this._scoreText);
             this.setChildIndex(this._scoreText, 1);
 
@@ -681,7 +684,7 @@ namespace BubbleGunner.Game {
                 if (this._animals.length !== 0) return;
                 clearInterval(intervalHandler);
 
-                this._levelText = new Text(undefined, `bold 24px serif`, `yellow`); // ToDo: font, size
+                this._levelText = new Text(undefined, `bold 24px Permanent Marker`, `yellow`); // ToDo: font, size
                 this._levelText.text = `Level ${this._levelManager.currentLevel}`;
                 this._levelText.regX = this._levelText.getMeasuredWidth() / 2;
                 this._levelText.regY = this._levelText.getMeasuredHeight() / 2;
@@ -704,9 +707,9 @@ namespace BubbleGunner.Game {
             }, 200);
         }
 
-        private removeShape(...shapes: Shape[]): void {
+        private removeShape(...objects: DisplayObject[]): void {
             this.lockShapes(() => {
-                for (let shape of shapes) {
+                for (let shape of objects) {
                     this.removeChild(shape);
 
                     if (shape instanceof Bubble) {

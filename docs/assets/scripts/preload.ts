@@ -23,7 +23,7 @@ namespace BubbleGunner.Menu {
             this._circle.x = NormalWidth / 2;
             this._circle.y = NormalHeight / 2;
 
-            this._text = new Text(`0 %`, `20px Arial`, '#444');
+            this._text = new Text(`0 %`, `20px Permanent Marker`, '#444');
             this._text.x = this._text.y = -100;
 
             this.addChild(this._circle, this._text);
@@ -55,6 +55,11 @@ namespace BubbleGunner.Menu {
                 {id: `pause`, src: `images/pause.png`},
                 {id: `refresh`, src: `images/refresh.png`},
                 {id: `scoresbar`, src: `images/scoresbar.png`},
+                {id: `game-lava`, src: `images/lava.png`},
+                {id: `game-animal0`, src: `images/animal0.png`},
+                {id: `game-animal1`, src: `images/animal1.png`},
+                {id: `game-animal2`, src: `images/animal2.png`},
+                {id: `game-animal3`, src: `images/animal3.png`},
                 // Game - Sounds
                 {id: `game-bgm`, src: `sounds/bgm.ogg`},
                 {id: `game-bubble-shoot`, src: `sounds/bubble-shoot.ogg`},
