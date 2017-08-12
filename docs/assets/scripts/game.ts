@@ -84,23 +84,19 @@ namespace BubbleGunner.Game {
         }
     }
 
-    class LavaPiece extends Shape {
+    class LavaPiece extends Bitmap {
         public static EventFell: string = `fell`;
+        public static Radius: number = 60;
         private static Speed: number = 400;
 
         public startPoint: Point;
         public endPoint: Point;
         public speed: number;
-        private static Width = 25;
-        private static Height = 20;
 
         constructor(startX: number) {
-            super();
-            this.graphics
-                .beginFill('red')
-                .drawRect(0, 0, LavaPiece.Width, LavaPiece.Height);
+            super(loader.getResult(`game-lava`));
 
-            this.startPoint = new Point(startX, 0);
+            this.startPoint = new Point(startX, -LavaPiece.Radius * 2);
             this.x = this.startPoint.x;
             this.y = this.startPoint.y;
         }
@@ -614,7 +610,7 @@ namespace BubbleGunner.Game {
                 console.debug(this._lavaPieces);
 
                 lava.on(LavaPiece.EventFell, () => this.removeShape(lava), this);
-                lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
+                lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight + LavaPiece.Radius));
                 Sound.play(`game-lava-fall`);
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
