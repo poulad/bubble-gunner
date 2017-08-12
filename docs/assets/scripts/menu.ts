@@ -6,9 +6,11 @@ namespace BubbleGunner.Menu {
     import Sound = createjs.Sound;
     import SpriteSheet = createjs.SpriteSheet;
     import Sprite = createjs.Sprite;
+    import Container = createjs.Container;
 
     export class MenuScene extends Scene {
         private _btnStartGame: Bitmap;
+        private _btnStartGame2: Container;
         private _btnHelp: Bitmap;
         private _dragon: Sprite;
 
@@ -29,9 +31,11 @@ namespace BubbleGunner.Menu {
             this._btnStartGame.x = NormalWidth / 2;
             this._btnStartGame.y = NormalHeight / 2;
             this._btnStartGame.cursor = `pointer`;
-            setInterval(this.pulse.bind(this), 120);
             this._btnStartGame.on(`click`, this.onStartButtonClick, this);
             this.addChild(this._btnStartGame);
+            setInterval(this.pulse.bind(this), 120);
+
+            // this.createStartGameButton();
 
             this._btnHelp = new Bitmap(loader.getResult(`menu-help`));
             this._btnHelp.x = NormalWidth - this._btnHelp.image.width - 50;
@@ -124,6 +128,29 @@ namespace BubbleGunner.Menu {
             let newAlpha = this._btnHelp.alpha - .08;
             if (newAlpha < .9) newAlpha = 1;
             Tween.get(this._btnHelp).to({alpha: newAlpha}, 110);
+        }
+
+        private createStartGameButton(): void {
+            // ToDo: Use font instead of image
+            this._btnStartGame2 = new Container();
+
+            const width = 200;
+            const height = 100;
+            let back = new Shape();
+            back.graphics
+                .beginFill(`orange`)
+                .beginStroke(`#A88`)
+                .setStrokeStyle(6)
+                .drawRoundRect(0, 0, width, height, 10);
+            this._btnStartGame2.addChild(back);
+
+            this._btnStartGame2.regX = width / 2;
+            this._btnStartGame2.regY = height / 2;
+            this._btnStartGame2.x = NormalWidth / 2;
+            this._btnStartGame2.y = NormalHeight / 2;
+            this._btnStartGame2.cursor = `pointer`;
+            this._btnStartGame2.on(`click`, this.onStartButtonClick, this);
+            this.addChild(this._btnStartGame2);
         }
     }
 }

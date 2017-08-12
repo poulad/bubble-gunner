@@ -50,6 +50,9 @@ namespace BubbleGunner.Menu {
                 {id: `menu-start`, src: `images/start.png`},
                 {id: `menu-help`, src: `images/help.png`},
 
+                // Help
+                {id: `help-guide`, src: `images/help-guide.png`},
+
                 // Game - Images
                 {id: `back`, src: `images/back.png`},
                 {id: `pause`, src: `images/pause.png`},
