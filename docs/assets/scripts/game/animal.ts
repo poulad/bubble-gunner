@@ -13,6 +13,7 @@ namespace BubbleGunner.Game {
 
         constructor(point: Point) {
             super(Animal.getRandomAnimalImage());
+            this.name = `Animal ${generateId()}`;
 
             this.regX = this.regY = Animal.Radius;
             this.x = point.x;

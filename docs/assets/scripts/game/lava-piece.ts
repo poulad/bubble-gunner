@@ -14,9 +14,11 @@ namespace BubbleGunner.Game {
 
         constructor(startX: number) {
             super(loader.getResult(`game-lava`));
+            this.name = `Lava piece ${generateId()}`;
 
             this.startPoint = new Point(startX, -LavaPiece.Radius * 2);
             this.regX = this.regY = LavaPiece.Radius;
+            this.scaleX = this.scaleY = 1;
             this.x = this.startPoint.x;
             this.y = this.startPoint.y;
         }
@@ -28,6 +30,7 @@ namespace BubbleGunner.Game {
                 .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
+                    rotation: 180
                 }, getTweenDurationMSecs(this.startPoint, this.endPoint, LavaPiece.Speed))
                 .call(() => this.dispatchEvent(new Event(LavaPiece.EventFell)));
         }

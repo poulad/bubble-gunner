@@ -64,8 +64,8 @@ namespace BubbleGunner.Menu {
                 {id: `game-animal2`, src: `images/animal2.png`},
                 {id: `game-animal3`, src: `images/animal3.png`},
                 // Game - Sounds
-                {id: `game-bgm`, src: `sounds/bgm.ogg`},
-                {id: `game-bubble-shoot`, src: `sounds/bubble-shoot.ogg`},
+                {id: `s:game-bgm`, src: `sounds/game-bgm.ogg`},
+                {id: `s:game-bubble-shoot`, src: `sounds/bubble-shoot.ogg`},
                 {id: `game-lava-fall`, src: `sounds/lava-fall.ogg`},
             ]);
         }

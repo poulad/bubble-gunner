@@ -22,6 +22,8 @@ namespace BubbleGunner.Game {
 
         constructor(from: Point, to: Point) {
             super();
+            this.name = `Bubble ${generateId()}`;
+
             this.graphics
                 .beginFill('rgba(255, 255, 255, .1)')
                 .beginStroke('rgba(255, 255, 255, .8)')

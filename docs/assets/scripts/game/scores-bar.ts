@@ -15,6 +15,7 @@ namespace BubbleGunner.Game {
 
         constructor(private _levelManager: LevelManager, private _score: number = 0, private _remainingLives: number = 4) {
             super();
+            this.name = `Scores bar ${generateId()}`;
 
             const barMargin = 3;
 

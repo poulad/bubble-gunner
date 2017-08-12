@@ -20,6 +20,8 @@ namespace BubbleGunner.Game {
 
         constructor() {
             super();
+            this.name = `Dragon ${generateId()}`;
+
             this._body = new Bitmap(loader.getResult(`dragon`));
 
             this._hand = new Bitmap(loader.getResult(`dragon-hand`));

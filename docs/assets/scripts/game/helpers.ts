@@ -2,6 +2,8 @@ namespace BubbleGunner.Game {
     import DisplayObject = createjs.DisplayObject;
     import Point = createjs.Point;
 
+    let id: number = 0;
+
     export function hasCollisions(tuple: [Bubble, Animal[]]): boolean {
         return tuple[1].length > 0;
     }
@@ -16,5 +18,9 @@ namespace BubbleGunner.Game {
 
     export function getTweenDurationMSecs(p1: Point, p2: Point, speed: number): number {
         return Math.floor(getPointsDistance(p1, p2) * 1000 / speed);
+    }
+
+    export function generateId(): number {
+        return ++id;
     }
 }

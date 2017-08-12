@@ -198,12 +198,12 @@ namespace BubbleGunner.Game {
                 this.removeShape(bubble.getAnimal(), bubble);
             }, this);
 
-            Sound.play(`game-bubble-shoot`);
+            Sound.play(`s:game-bubble-shoot`);
             bubble.move();
         }
 
         private playBackgroundMusic(): void {
-            this._bgMusic = Sound.play(`game-bgm`);
+            this._bgMusic = Sound.play(`s:game-bgm`);
             this._bgMusicListener = this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
             this._bgMusic.volume = .5;
             this._bgMusic.pan = .5;
@@ -280,12 +280,13 @@ namespace BubbleGunner.Game {
             this.lockShapes(() => {
                 this._bubbles
                     .filter(this.isCollidingWithAnyLava(this._lavaPieces))
-                    .forEach((b: Bubble) => {
-                            b.pop();
-                            console.debug("hit lava!");
+                    .forEach(b => {
+                        console.debug(`lava is popping ${b.name}`);
+                        if (!b.containsAnimal) {
                             this._dragon.setGunFireDelay(1.5 * 1000);
                         }
-                    );
+                        b.pop();
+                    });
 
                 this._bubbles
                     .filter(this.isNotCollidingWithOtherBubbles(this._bubbles))
@@ -338,10 +339,12 @@ namespace BubbleGunner.Game {
         }
 
         private isCollidingWithAnyLava(lavaPieces: LavaPiece[]) {
-            const centersDistance = Bubble.Radius + LavaPiece.Radius;
-
-            return (b: Bubble) => lavaPieces
-                .some(l => getObjectsDistance(b, l) <= centersDistance);
+            return (b: Bubble) => {
+                return lavaPieces
+                    .some(l =>
+                        getObjectsDistance(b, l) <= (Bubble.Radius * b.scaleX + LavaPiece.Radius * l.scaleX)
+                    );
+            }
         }
     }
 }
