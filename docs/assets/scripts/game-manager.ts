@@ -10,7 +10,7 @@ namespace BubbleGunner {
     import GameOverScene = BubbleGunner.GameOver.GameOverScene;
 
     export class GameManager extends EventDispatcher {
-        private _currentScene: Scene;
+        private _currentScene: SceneBase;
 
         constructor(private _stage: Stage) {
             super();
@@ -30,7 +30,7 @@ namespace BubbleGunner {
             this._currentScene = GameManager.createScene(sceneType);
             this._stage.addChild(this._currentScene);
 
-            this._currentScene.on(Scene.EventChangeScene, this.changeSceneHandler, this);
+            this._currentScene.on(SceneBase.EventChangeScene, this.changeSceneHandler, this);
             this._currentScene.start();
         }
 
@@ -38,8 +38,8 @@ namespace BubbleGunner {
             this.startNewScene(evt.toScene, evt.startArgs);
         }
 
-        private static createScene(sceneType: SceneType): Scene {
-            let scene: Scene;
+        private static createScene(sceneType: SceneType): SceneBase {
+            let scene: SceneBase;
             switch (sceneType) {
                 case SceneType.Preload:
                     scene = new PreloadScene();

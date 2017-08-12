@@ -11,13 +11,35 @@ module.exports = function (grunt) {
         concat: {
             bubbleGunner: {
                 src: [
-                    "docs/assets/scripts/bubble-gunner2.js",
-                    "docs/assets/scripts/preload.js",
-                    "docs/assets/scripts/menu.js",
-                    "docs/assets/scripts/help.js",
-                    "docs/assets/scripts/game.js",
-                    "docs/assets/scripts/game-over.js",
-                    "docs/assets/scripts/bubble-gunner.js",
+                    // Common
+                    "docs/assets/scripts/globals.js",
+                    "docs/assets/scripts/scene-type.js",
+                    "docs/assets/scripts/scene-event.js",
+                    "docs/assets/scripts/scene-base.js",
+
+                    // Preload scene
+                    "docs/assets/scripts/preload/preload.js",
+
+                    // Menu scene
+                    "docs/assets/scripts/menu/menu-scene.js",
+
+                    // Help scene
+                    "docs/assets/scripts/help/help-scene.js",
+
+                    // Game scene
+                    "docs/assets/scripts/game/helpers.js",
+                    "docs/assets/scripts/game/level-manager.js",
+                    "docs/assets/scripts/game/scores-bar.js",
+                    "docs/assets/scripts/game/dragon.js",
+                    "docs/assets/scripts/game/lava-piece.js",
+                    "docs/assets/scripts/game/animal.js",
+                    "docs/assets/scripts/game/bubble.js",
+                    "docs/assets/scripts/game/game-scene.js",
+
+                    // Game Over scene
+                    "docs/assets/scripts/game-over/game-over-scene.js",
+
+                    "docs/assets/scripts/game-manager.js",
                     "docs/assets/scripts/script.js"
                 ],
                 dest: "docs/assets/scripts/bubble-gunner.concat.js"

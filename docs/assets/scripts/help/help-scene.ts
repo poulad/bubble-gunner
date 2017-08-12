@@ -3,8 +3,7 @@ namespace BubbleGunner.Help {
     import Sound = createjs.Sound;
     import Shape = createjs.Shape;
 
-    export class HelpScene extends Scene {
-
+    export class HelpScene extends SceneBase {
         constructor() {
             super();
 
@@ -35,7 +34,7 @@ namespace BubbleGunner.Help {
 
         private dispatchBackToMenuEvent(): void {
             Sound.play(`sound-button`);
-            this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu));
+            this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Menu));
         }
     }
 }

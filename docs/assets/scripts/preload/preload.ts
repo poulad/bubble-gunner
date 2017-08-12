@@ -5,7 +5,7 @@ namespace BubbleGunner.Menu {
     import LoadQueue = createjs.LoadQueue;
     import Sound = createjs.Sound;
 
-    export class PreloadScene extends Scene {
+    export class PreloadScene extends SceneBase {
         private _circle: Shape;
         private _text: Text;
 
@@ -90,7 +90,7 @@ namespace BubbleGunner.Menu {
             Tween.get(this._circle)
                 .to({scaleX: 10, scaleY: 10}, 200)
                 .call(() => setTimeout(() =>
-                    this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Menu)), 400)
+                    this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Menu)), 400)
                 );
         }
     }

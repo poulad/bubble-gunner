@@ -4,7 +4,7 @@ namespace BubbleGunner.GameOver {
     import Text = createjs.Text;
     import Sound = createjs.Sound;
 
-    export class GameOverScene extends Scene {
+    export class GameOverScene extends SceneBase {
         private _refreshButton: Bitmap;
         private _pulseIntervalHandle: number;
         private _pulseCount: number = 0;
@@ -12,7 +12,7 @@ namespace BubbleGunner.GameOver {
         constructor() {
             super();
 
-            let text = new Text(`GAME OVER`, `bold 80px Arial`, `#f57`);
+            let text = new Text(`GAME OVER`, `80px Permanent Marker`, `#F57`);
             const textSize = text.getBounds();
             text.x = NormalWidth / 2 - textSize.width / 2;
             text.y = 30;
@@ -35,7 +35,7 @@ namespace BubbleGunner.GameOver {
         private dispatchPlayGameEvent(): void {
             Sound.play(`sound-button`);
             clearInterval(this._pulseIntervalHandle);
-            this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Game));
+            this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Game));
         }
 
         private pulse(): void {

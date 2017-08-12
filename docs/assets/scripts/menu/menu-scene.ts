@@ -8,7 +8,7 @@ namespace BubbleGunner.Menu {
     import Sprite = createjs.Sprite;
     import Container = createjs.Container;
 
-    export class MenuScene extends Scene {
+    export class MenuScene extends SceneBase {
         private _btnStartGame: Bitmap;
         private _btnStartGame2: Container;
         private _btnHelp: Bitmap;
@@ -91,13 +91,13 @@ namespace BubbleGunner.Menu {
                     scaleY: 10
                 }, 2 * 1000)
                 .call(() => {
-                    this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Game));
+                    this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Game));
                 });
         }
 
         private onHelpButtonClick(): void {
             Sound.play(`sound-button`);
-            this.dispatchEvent(new SceneEvent(Scene.EventChangeScene, SceneType.Help));
+            this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Help));
         }
 
         private moveDragon(evt: any): void {
