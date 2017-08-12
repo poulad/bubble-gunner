@@ -23,7 +23,7 @@ namespace BubbleGunner.Menu {
             this._circle.x = NormalWidth / 2;
             this._circle.y = NormalHeight / 2;
 
-            this._text = new Text(`0 %`, `20px Permanent Marker`, '#444');
+            this._text = new Text(`0 %`, `40px Permanent Marker`, '#444');
             this._text.x = this._text.y = -100;
 
             this.addChild(this._circle, this._text);

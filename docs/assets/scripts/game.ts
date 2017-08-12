@@ -16,12 +16,16 @@ namespace BubbleGunner.Game {
         return tuple[1].length > 0;
     }
 
-    export function findDistance(p1: Point, p2: Point): number {
+    export function getPointsDistance(p1: Point, p2: Point): number {
         return Math.sqrt(Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2));
     }
 
+    export function getObjectsDistance(o1: DisplayObject, o2: DisplayObject): number {
+        return getPointsDistance(new Point(o1.x, o1.y), new Point(o1.y, o2.y));
+    }
+
     export function getTweenDurationMSecs(p1: Point, p2: Point, speed: number): number {
-        return Math.floor(findDistance(p1, p2) * 1000 / speed);
+        return Math.floor(getPointsDistance(p1, p2) * 1000 / speed);
     }
 
     export class Point {
@@ -86,7 +90,7 @@ namespace BubbleGunner.Game {
 
     class LavaPiece extends Bitmap {
         public static EventFell: string = `fell`;
-        public static Radius: number = 60;
+        public static Radius: number = 30;
         private static Speed: number = 400;
 
         public startPoint: Point;
@@ -97,6 +101,7 @@ namespace BubbleGunner.Game {
             super(loader.getResult(`game-lava`));
 
             this.startPoint = new Point(startX, -LavaPiece.Radius * 2);
+            this.regX = this.regY = LavaPiece.Radius;
             this.x = this.startPoint.x;
             this.y = this.startPoint.y;
         }
@@ -117,7 +122,7 @@ namespace BubbleGunner.Game {
         public static EventPopped: string = `popped`;
         public static EventAscended: string = `ascended`;
         public static EventRescuedAnimal: string = `rescued`;
-        public static Radius: number = 42;
+        public static Radius: number = 46;
 
         private static Speed: number = 450;
         private static AscendingSpeed: number = 100;
@@ -135,6 +140,7 @@ namespace BubbleGunner.Game {
             this.graphics
                 .beginFill('rgba(255, 255, 255, .1)')
                 .beginStroke('rgba(255, 255, 255, .8)')
+                .setStrokeStyle(2)
                 .drawCircle(0, 0, Bubble.Radius);
 
             this.startPoint = from;
@@ -165,6 +171,9 @@ namespace BubbleGunner.Game {
 
             Tween.removeTweens(this);
             Tween.removeTweens(this._animal);
+
+            // make sure bubble is in full scale (for animals close to gun muzzle)
+            this.scaleX = this.scaleY = 1;
 
             this.startPoint = new Point(this.x, this.y);
             this.endPoint = new Point(this.x, -Animal.Radius);
@@ -549,8 +558,8 @@ namespace BubbleGunner.Game {
         }
 
         private startRain(): void {
-            this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 3000);
-            this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 4000);
+            this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 2.3 * 1000);
+            this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 3.5 * 1000);
         }
 
         private stopRain(): void {
@@ -772,7 +781,7 @@ namespace BubbleGunner.Game {
                 let circle1Center = new Point(bubble.x, bubble.y);
                 let isCollidingWithBubble = (b: Bubble) => {
                     let circle2Center = new Point(b.x, b.y);
-                    return findDistance(circle1Center, circle2Center) <= centersDistance;
+                    return getPointsDistance(circle1Center, circle2Center) <= centersDistance;
                 };
 
                 return (allBubbles
@@ -788,16 +797,17 @@ namespace BubbleGunner.Game {
 
             let isAnimalColliding = (a: Animal) => {
                 let circle2Center = new Point(a.x, a.y);
-                return findDistance(circle1Center, circle2Center) <= centersDistance;
+                return getPointsDistance(circle1Center, circle2Center) <= centersDistance;
             };
 
             return animals.filter(isAnimalColliding);
         }
 
-        private isCollidingWithAnyLava(lavas: LavaPiece[]) {
-            return (b: Bubble) => (lavas
-                .filter(l => Math.sqrt(Math.pow(b.y - l.y, 2) + Math.pow(b.x - l.x, 2)) < 30)
-                .length > 0);
+        private isCollidingWithAnyLava(lavaPieces: LavaPiece[]) {
+            const centersDistance = Bubble.Radius + LavaPiece.Radius;
+
+            return (b: Bubble) => lavaPieces
+                .some(l => getObjectsDistance(b, l) <= centersDistance);
         }
     }
 }
