@@ -35,6 +35,7 @@ module.exports = function (grunt) {
                     "docs/assets/scripts/game/lava-piece.js",
                     "docs/assets/scripts/game/animal.js",
                     "docs/assets/scripts/game/bubble.js",
+                    "docs/assets/scripts/game/pterodactyl.js",
                     "docs/assets/scripts/game/game-scene.js",
 
                     // Game Over scene

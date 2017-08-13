@@ -65,6 +65,7 @@ namespace BubbleGunner.Menu {
                 {id: `game-animal1`, src: `images/animal1.png`},
                 {id: `game-animal2`, src: `images/animal2.png`},
                 {id: `game-animal3`, src: `images/animal3.png`},
+                {id: `game-pterodactyl`, src: `images/pterodactyl.png`},
             ]);
         }
 

@@ -88,6 +88,9 @@ namespace BubbleGunner.Game {
             this.playBackgroundMusic();
 
             this.startRain();
+            let t = new Pterodactyl(new Point(-100, 700));
+            this.addChild(t);
+            t.flyTo(new Point(850, 0));
         }
 
         private startRain(): void {

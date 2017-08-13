@@ -3,7 +3,6 @@ namespace BubbleGunner.Menu {
     import Bitmap = createjs.Bitmap;
     import Graphics = createjs.Graphics;
     import Tween = createjs.Tween;
-    import Sound = createjs.Sound;
     import SpriteSheet = createjs.SpriteSheet;
     import Sprite = createjs.Sprite;
     import Container = createjs.Container;
@@ -35,7 +34,7 @@ namespace BubbleGunner.Menu {
             this.addChild(this._btnStartGame);
             setInterval(this.pulse.bind(this), 120);
 
-            // this.createStartGameButton();
+            // this.createStartGameButton(); // ToDo
 
             this._btnHelp = new Bitmap(loader.getResult(`menu-help`));
             this._btnHelp.x = NormalWidth - this._btnHelp.image.width - 50;
