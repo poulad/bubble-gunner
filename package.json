@@ -4,14 +4,16 @@
   "private": true,
   "author": "Poulad",
   "scripts": {
-    "compile": "./node_modules/.bin/tsc",
-    "minify": "./node_modules/.bin/grunt",
+    "compile": "tsc",
+    "minify": "grunt",
     "build": "npm run compile && npm run minify",
+    "gen-audio": "cd docs/assets/sounds/ && audiosprite --output audiosprite --export 'ogg,mp3' --format createjs --bitrate 64 *.wma",
     "start": "node server.js",
-    "install": "./node_modules/.bin/typings install",
+    "install": "typings install",
     "postinstall": "npm run build"
   },
   "devDependencies": {
+    "audiosprite": "^0.6.0",
     "express": "^4.15.4",
     "grunt": "^1.0.1",
     "grunt-contrib-clean": "^1.1.0",

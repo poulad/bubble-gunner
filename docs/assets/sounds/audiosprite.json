@@ -1,0 +1,32 @@
+{
+  "src": "audiosprite.ogg",
+  "data": {
+    "audioSprite": [
+      {
+        "id": "game-bgm",
+        "startTime": 0,
+        "duration": 102121.36054421769
+      },
+      {
+        "id": "game-bubble-shoot",
+        "startTime": 104000,
+        "duration": 139.31972789116287
+      },
+      {
+        "id": "game-lava-fall",
+        "startTime": 106000,
+        "duration": 2182.675736961457
+      },
+      {
+        "id": "game-pterodactyl",
+        "startTime": 110000,
+        "duration": 743.0385487528355
+      },
+      {
+        "id": "menu-button",
+        "startTime": 112000,
+        "duration": 325.0793650793611
+      }
+    ]
+  }
+}
