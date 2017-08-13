@@ -51,6 +51,7 @@ namespace BubbleGunner.Game {
 
         public increaseScore(): void {
             this.setScore(this._score + 1);
+            playSound(SoundAsset.Score);
         }
 
         public decreaseRemainingLives(): void {

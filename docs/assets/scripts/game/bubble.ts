@@ -84,10 +84,13 @@ namespace BubbleGunner.Game {
                 this._animal.continueFall();
             }
 
-            return Tween.get(this)
+            let tween = Tween.get(this)
                 .to({
                     alpha: 0
                 }).call(this.dispatchEvent.bind(this, new Event(Bubble.EventPopped)));
+
+            playSound(SoundAsset.BubblePop);
+            return tween;
         }
 
         private handleTick(): void {

@@ -9,16 +9,24 @@ namespace BubbleGunner {
 
     export enum SoundAsset {
         ButtonClick,
+
+        GameBgMusic,
         LavaPieceFall,
         BubbleShoot,
-        GameBgMusic,
+        BubblePop,
+        Volcano,
+        Score,
     }
 
     const soundMappings: [SoundAsset, string][] = [
         [SoundAsset.ButtonClick, `menu-button`],
+
+        [SoundAsset.GameBgMusic, `game-bgm`],
+        [SoundAsset.Volcano, `game-volcano`],
         [SoundAsset.LavaPieceFall, `game-lava-fall`],
         [SoundAsset.BubbleShoot, `game-bubble-shoot`],
-        [SoundAsset.GameBgMusic, `game-bgm`],
+        [SoundAsset.BubblePop, `game-bubble-pop`],
+        [SoundAsset.Score, `game-score`],
     ];
 
     export function getImage(id: ImageAsset): Object {

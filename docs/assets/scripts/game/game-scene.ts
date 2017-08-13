@@ -203,7 +203,7 @@ namespace BubbleGunner.Game {
 
         private playBackgroundMusic(): void {
             this._bgMusic = playSound(SoundAsset.GameBgMusic);
-            this._bgMusicListener = this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
+            this._bgMusic.loop = -1;
             this._bgMusic.volume = .5;
             this._bgMusic.pan = .5;
         }
@@ -242,6 +242,7 @@ namespace BubbleGunner.Game {
                     });
 
                 this.addChild(this._levelText);
+                playSound(SoundAsset.Volcano);
             }, 200);
         }
 

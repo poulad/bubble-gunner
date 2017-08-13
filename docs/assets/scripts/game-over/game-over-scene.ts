@@ -2,7 +2,6 @@ namespace BubbleGunner.GameOver {
     import Bitmap = createjs.Bitmap;
     import Tween = createjs.Tween;
     import Text = createjs.Text;
-    import Sound = createjs.Sound;
 
     export class GameOverScene extends SceneBase {
         private _refreshButton: Bitmap;
@@ -33,7 +32,7 @@ namespace BubbleGunner.GameOver {
         }
 
         private dispatchPlayGameEvent(): void {
-            Sound.play(`sound-button`);
+            playSound(SoundAsset.ButtonClick);
             clearInterval(this._pulseIntervalHandle);
             this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Game));
         }
