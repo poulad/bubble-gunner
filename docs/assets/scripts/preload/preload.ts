@@ -37,7 +37,9 @@ namespace BubbleGunner.Menu {
             loader.on(`complete`, this.changeToMenuScene, this);
 
             loader.loadManifest([
-                {id: `sound-button`, src: `sounds/button.ogg`},
+                // Audiosprite
+                {id: `j:audiosprite`, src: `sounds/audiosprite.json`},
+                {id: `s:audiosprite`, src: `sounds/audiosprite.ogg`},
 
                 {id: `dragon`, src: `images/dragon.png`},
                 {id: `dragon-hand`, src: `images/dragon-hand.png`},
@@ -63,10 +65,6 @@ namespace BubbleGunner.Menu {
                 {id: `game-animal1`, src: `images/animal1.png`},
                 {id: `game-animal2`, src: `images/animal2.png`},
                 {id: `game-animal3`, src: `images/animal3.png`},
-                // Game - Sounds
-                {id: `s:game-bgm`, src: `sounds/game-bgm.ogg`},
-                {id: `s:game-bubble-shoot`, src: `sounds/bubble-shoot.ogg`},
-                {id: `game-lava-fall`, src: `sounds/lava-fall.ogg`},
             ]);
         }
 

@@ -83,7 +83,7 @@ namespace BubbleGunner.Menu {
         }
 
         private onStartButtonClick(): void {
-            Sound.play(`sound-button`);
+            playSound(SoundAsset.ButtonClick);
             Tween.get(this)
                 .to({
                     alpha: 0,
@@ -96,7 +96,7 @@ namespace BubbleGunner.Menu {
         }
 
         private onHelpButtonClick(): void {
-            Sound.play(`sound-button`);
+            playSound(SoundAsset.ButtonClick);
             this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Help));
         }
 

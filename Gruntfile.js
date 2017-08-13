@@ -16,6 +16,7 @@ module.exports = function (grunt) {
                     "docs/assets/scripts/scene-type.js",
                     "docs/assets/scripts/scene-event.js",
                     "docs/assets/scripts/scene-base.js",
+                    "docs/assets/scripts/asset-manager.js",
 
                     // Preload scene
                     "docs/assets/scripts/preload/preload.js",

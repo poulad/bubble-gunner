@@ -4,7 +4,6 @@ namespace BubbleGunner.Game {
     import Text = createjs.Text;
     import Bitmap = createjs.Bitmap;
     import MouseEvent = createjs.MouseEvent;
-    import Sound = createjs.Sound;
     import AbstractSoundInstance = createjs.AbstractSoundInstance;
     import DisplayObject = createjs.DisplayObject;
     import Point = createjs.Point;
@@ -63,7 +62,7 @@ namespace BubbleGunner.Game {
             this._pauseButton.y = NormalHeight - this._pauseButton.getBounds().height - 30;
             this._pauseButton.cursor = `pointer`;
             this._pauseButtonListener = this._pauseButton.on(`click`, () => {
-                Sound.play(`sound-button`);
+                playSound(SoundAsset.ButtonClick);
                 this.changeGameScene(SceneType.Menu);
             }, this);
             this.addChild(this._pauseButton);
@@ -154,7 +153,7 @@ namespace BubbleGunner.Game {
 
                 lava.on(LavaPiece.EventFell, () => this.removeShape(lava), this);
                 lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight + LavaPiece.Radius));
-                Sound.play(`game-lava-fall`);
+                playSound(SoundAsset.LavaPieceFall)
             };
             // console.debug(`level: ${this._levelManager.currentLevel}`);
             switch (this._levelManager.currentLevel) {
@@ -198,12 +197,12 @@ namespace BubbleGunner.Game {
                 this.removeShape(bubble.getAnimal(), bubble);
             }, this);
 
-            Sound.play(`s:game-bubble-shoot`);
+            playSound(SoundAsset.BubbleShoot);
             bubble.move();
         }
 
         private playBackgroundMusic(): void {
-            this._bgMusic = Sound.play(`s:game-bgm`);
+            this._bgMusic = playSound(SoundAsset.GameBgMusic);
             this._bgMusicListener = this._bgMusic.on(`complete`, this.playBackgroundMusic, this);
             this._bgMusic.volume = .5;
             this._bgMusic.pan = .5;
