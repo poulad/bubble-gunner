@@ -3,7 +3,6 @@ namespace BubbleGunner.Menu {
     import Bitmap = createjs.Bitmap;
     import Graphics = createjs.Graphics;
     import Tween = createjs.Tween;
-    import Sound = createjs.Sound;
     import SpriteSheet = createjs.SpriteSheet;
     import Sprite = createjs.Sprite;
     import Container = createjs.Container;
@@ -103,7 +102,7 @@ namespace BubbleGunner.Menu {
         private moveDragon(evt: any): void {
             if (evt && evt.name !== `cheer`) return;
 
-            console.debug(`Dragon running to other side`);
+            // console.debug(`Dragon running to other side`);
             const n = 9;
 
             let newX = this._dragon.scaleX > 0 ? 3 * NormalWidth / n : (n - 3) * NormalWidth / n;

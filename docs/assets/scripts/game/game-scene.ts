@@ -279,20 +279,14 @@ namespace BubbleGunner.Game {
 
             this.lockShapes(() => {
                 this._bubbles
-                    .filter(this.isCollidingWithAnyLava(this._lavaPieces))
-                    .forEach(b => {
-                        console.debug(`lava is popping ${b.name}`);
-                        if (!b.containsAnimal) {
-                            this._dragon.setGunFireDelay(1.5 * 1000);
-                        }
-                        b.pop();
-                    });
+                    .filter(b => !b.isPopping)
+                    .filter(this.isCollidingWithAnyLavaPiece(this._lavaPieces))
+                    .forEach(this.popBubble.bind(this));
 
                 this._bubbles
                     .filter(this.isNotCollidingWithOtherBubbles(this._bubbles))
-                    .map(b => [b, this.findAnimalsCollidingWithBubble(b, this._animals)])
-                    .filter(hasCollisions)
-                    .map(tuple => <[Bubble, Animal]>[tuple[0], tuple[1][0]])
+                    .map(b => [b, this.findClosestAnimalCollidingWithBubble(b, this._animals)])
+                    .filter(this.tupleHasValues)
                     .forEach((tuple: [Bubble, Animal]) => tuple[0].takeAnimal(tuple[1]));
             });
         }
@@ -307,6 +301,21 @@ namespace BubbleGunner.Game {
             this._isShapesLockFree = false;
             f();
             this._isShapesLockFree = true;
+        }
+
+        private isCollidingWithAnyLavaPiece(lavaPieces: LavaPiece[]) {
+            const centersDistance = Bubble.Radius + LavaPiece.Radius;
+            return (b: Bubble) => {
+                return lavaPieces.some(l => getObjectsDistance(b, l) <= centersDistance);
+            }
+        }
+
+        private popBubble(bubble: Bubble): void {
+            // console.debug(`lava is popping ${bubble.name}`);
+            if (!bubble.containsAnimal) {
+                this._dragon.setGunFireDelay(1.5 * 1000);
+            }
+            bubble.pop();
         }
 
         private isNotCollidingWithOtherBubbles(allBubbles: Bubble[]) {
@@ -326,25 +335,22 @@ namespace BubbleGunner.Game {
             };
         }
 
-        private findAnimalsCollidingWithBubble(bubble: Bubble, animals: Animal[]): Animal[] {
+        private findClosestAnimalCollidingWithBubble(bubble: Bubble, animals: Animal[]): Animal {
             const centersDistance = Bubble.Radius + Animal.Radius;
-            let circle1Center = new Point(bubble.x, bubble.y);
-
-            let isAnimalColliding = (a: Animal) => {
-                let circle2Center = new Point(a.x, a.y);
-                return getPointsDistance(circle1Center, circle2Center) <= centersDistance;
-            };
-
-            return animals.filter(isAnimalColliding);
+            return animals
+                .map(a => [a, getObjectsDistance(bubble, a)])
+                .filter(tuple => (tuple[1] as number) < centersDistance)
+                .sort((tupleA, tupleB) => {
+                    if (tupleA[1] < tupleB[1]) return -1;
+                    if (tupleA[1] === tupleB[1]) return 0;
+                    return 1;
+                })
+                .map(tuple => tuple[0] as Animal)
+                .shift();
         }
 
-        private isCollidingWithAnyLava(lavaPieces: LavaPiece[]) {
-            return (b: Bubble) => {
-                return lavaPieces
-                    .some(l =>
-                        getObjectsDistance(b, l) <= (Bubble.Radius * b.scaleX + LavaPiece.Radius * l.scaleX)
-                    );
-            }
+        private tupleHasValues(tuple: Array<DisplayObject>): boolean {
+            return tuple.every(val => val != undefined);
         }
     }
 }
