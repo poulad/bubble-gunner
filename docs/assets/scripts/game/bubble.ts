@@ -10,7 +10,7 @@ namespace BubbleGunner.Game {
         public static Radius: number = 46;
 
         private static Speed: number = 450;
-        private static AscendingSpeed: number = 280;
+        private static AscendingSpeed: number = 150;
 
         public startPoint: Point;
         public endPoint: Point;

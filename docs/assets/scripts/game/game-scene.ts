@@ -22,16 +22,11 @@ namespace BubbleGunner.Game {
 
         private _animalRainInterval: number;
         private _lavaRainInterval: number;
-        private _tickListener: Function;
-        private _mouseMoveListener: Function;
-        private _mouseUpListener: Function;
-        private _scoresBarListener: Function;
-        private _pauseButtonListener: Function;
-        private _bgMusicListener: Function;
-        private _levelListener: Function;
+        private _gc: GarbageCollector = new GarbageCollector(this);
 
         constructor() {
             super();
+
 
             let bgColor = new Shape();
             bgColor.graphics
@@ -46,7 +41,8 @@ namespace BubbleGunner.Game {
             this._scoresBar = new ScoresBar(this._levelManager);
             this._scoresBar.x = 10;
             this._scoresBar.y = 10;
-            this._scoresBarListener = this._scoresBar.on(ScoresBar.EventNoLifeLeft, this.changeGameScene.bind(this, SceneType.GameOver));
+            this._gc.registerEventListener(this._scoresBar, ScoresBar.EventNoLifeLeft, this.changeGameScene.bind(this, SceneType.GameOver));
+
             this.addChild(this._scoresBar);
             this.setChildIndex(this._scoresBar, 3);
 
@@ -61,14 +57,14 @@ namespace BubbleGunner.Game {
             this._pauseButton.x = 30;
             this._pauseButton.y = NormalHeight - this._pauseButton.getBounds().height - 30;
             this._pauseButton.cursor = `pointer`;
-            this._pauseButtonListener = this._pauseButton.on(`click`, () => {
+            this._gc.registerEventListener(this._pauseButton, `click`, () => {
                 playSound(SoundAsset.ButtonClick);
                 this.changeGameScene(SceneType.Menu);
-            }, this);
+            });
             this.addChild(this._pauseButton);
             this.setChildIndex(this._pauseButton, 3);
 
-            this._tickListener = this.on(`tick`, this.handleTick, this);
+            this._gc.registerEventListener(this, `tick`, this.handleTick);
         }
 
         public start(...args: any[]): void {
@@ -80,46 +76,31 @@ namespace BubbleGunner.Game {
                 alpha: 1
             }, 1000);
 
-            this._mouseMoveListener = this.stage.on(`stagemousemove`, this._dragon.aimGun, this._dragon);
-            this._mouseUpListener = this.stage.on(`stagemouseup`, this.handleClick, this);
+            this._gc.registerEventListener(this.stage, `stagemousemove`, this._dragon.aimGun, this._dragon);
+            this._gc.registerEventListener(this.stage, `stagemouseup`, this.handleClick);
 
-            this._levelListener = this._levelManager.on(LevelManager.EventLevelChanged, this.showLevelChangedDemo, this);
+            this._gc.registerEventListener(this._levelManager, LevelManager.EventLevelChanged, this.showLevelChangedDemo);
 
             this.playBackgroundMusic();
 
             this.startRain();
-            let t = new Pterodactyl(new Point(-100, 700));
-            this.addChild(t);
-            t.flyTo(new Point(850, 0));
         }
 
         private startRain(): void {
-            this._animalRainInterval = setInterval(this.handleAnimalRainInterval.bind(this), 2.3 * 1000);
-            this._lavaRainInterval = setInterval(this.handleLavaRainInterval.bind(this), 3.5 * 1000);
+            this._animalRainInterval = this._gc.registerInterval(this.handleAnimalRainInterval.bind(this), 2.3 * 1000);
+            this._lavaRainInterval = this._gc.registerInterval(this.handleLavaRainInterval.bind(this), 3.5 * 1000);
         }
 
         private stopRain(): void {
-            clearInterval(this._animalRainInterval);
-            clearInterval(this._lavaRainInterval);
+            this._gc.disposeInterval(this._animalRainInterval);
+            this._gc.disposeInterval(this._lavaRainInterval);
         }
 
         private changeGameScene(toScene: SceneType): void {
-            this.off(`tick`, this._tickListener);
-            this.stage.off(`stagemousemove`, this._mouseMoveListener);
-            this.stage.off(`stagemouseup`, this._mouseUpListener);
-            this._scoresBar.off(ScoresBar.EventNoLifeLeft, this._scoresBarListener);
-            this._bgMusic.off(`complete`, this._bgMusicListener);
-            this._pauseButton.off(`click`, this._pauseButtonListener);
-            this._levelManager.off(LevelManager.EventLevelChanged, this._levelListener);
-
-            this.stopRain();
-
             this._bgMusic.stop();
             this.removeAllChildren();
-
-            this._bubbles.length = this._animals.length = this._lavaPieces.length = 0;
-
-            // ToDo: Clear up all events handlers, and etc
+            this._gc.disposeAll();
+            this._bubbles = this._animals = this._lavaPieces = [];
 
             switch (toScene) {
                 case SceneType.Menu:
@@ -142,7 +123,7 @@ namespace BubbleGunner.Game {
             this.setChildIndex(animal, 2);
             console.debug(this._animals);
 
-            animal.on(Animal.EventFell, this.handleAnimalFall, this);
+            this._gc.registerEventListener(animal, Animal.EventFell, this.handleAnimalFall);
             animal.moveTo(new Point(GameScene.getRandomX(), NormalHeight));
         }
 
@@ -154,7 +135,8 @@ namespace BubbleGunner.Game {
                 this.setChildIndex(lava, 2);
                 console.debug(this._lavaPieces);
 
-                lava.on(LavaPiece.EventFell, () => this.removeShape(lava), this);
+                this._gc.registerEventListener(lava, LavaPiece.EventFell, () => this.removeShape(lava));
+
                 lava.moveTo(new Point(GameScene.getRandomX(), NormalHeight + LavaPiece.Radius));
                 playSound(SoundAsset.LavaPieceFall)
             };
@@ -168,7 +150,8 @@ namespace BubbleGunner.Game {
                     break;
                 case 3:
                     throwLava();
-                    setTimeout(throwLava, 1.2 * 1000);
+                    const delay = 1000 + Math.floor(Math.random() * 3983475) % 1700;
+                    this._gc.registerTimeout(throwLava.bind(this), delay);
                     break;
                 default:
                     throw `Invalid level: ${this._levelManager.currentLevel}`;
@@ -193,12 +176,12 @@ namespace BubbleGunner.Game {
             this.setChildIndex(bubble, 2);
             console.debug(this._bubbles);
 
-            bubble.on(Bubble.EventPopped, () => this.removeShape(bubble), this);
-            bubble.on(Bubble.EventAscended, () => this.removeShape(bubble), this);
-            bubble.on(Bubble.EventRescuedAnimal, () => {
+            this._gc.registerEventListener(bubble, Bubble.EventPopped, () => this.removeShape(bubble));
+            this._gc.registerEventListener(bubble, Bubble.EventAscended, () => this.removeShape(bubble));
+            this._gc.registerEventListener(bubble, Bubble.EventRescuedAnimal, () => {
                 this._scoresBar.increaseScore();
                 this.removeShape(bubble.getAnimal(), bubble);
-            }, this);
+            });
 
             playSound(SoundAsset.BubbleShoot);
             bubble.move();
@@ -221,12 +204,11 @@ namespace BubbleGunner.Game {
             this.stopRain();
 
             let intervalHandler: number;
-            intervalHandler = setInterval(() => {
+            intervalHandler = this._gc.registerInterval(() => {
                 if (this._animals.length !== 0) return;
-                clearInterval(intervalHandler);
+                this._gc.disposeInterval(intervalHandler);
 
-                this._levelText = new Text(undefined, `bold 24px Permanent Marker`, `yellow`); // ToDo: font, size
-                this._levelText.text = `Level ${this._levelManager.currentLevel}`;
+                this._levelText = new Text(`Level ${this._levelManager.currentLevel}`, `bold 24px Permanent Marker`, `yellow`);
                 this._levelText.regX = this._levelText.getMeasuredWidth() / 2;
                 this._levelText.regY = this._levelText.getMeasuredHeight() / 2;
 
@@ -250,6 +232,7 @@ namespace BubbleGunner.Game {
         }
 
         private removeShape(...objects: DisplayObject[]): void {
+            objects = objects.filter(o => o != undefined);
             this.lockShapes(() => {
                 for (let shape of objects) {
                     this.removeChild(shape);
@@ -299,6 +282,8 @@ namespace BubbleGunner.Game {
             x = (Math.random() * 324627938) % NormalWidth;
             return x;
         }
+
+        // Collision Detection Helpers:
 
         private lockShapes(f: Function) {
             this._isShapesLockFree = false;

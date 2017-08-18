@@ -13,6 +13,7 @@ module.exports = function (grunt) {
                 src: [
                     // Common
                     "docs/assets/scripts/globals.js",
+                    "docs/assets/scripts/garbage-collector.js",
                     "docs/assets/scripts/scene-type.js",
                     "docs/assets/scripts/scene-event.js",
                     "docs/assets/scripts/scene-base.js",
