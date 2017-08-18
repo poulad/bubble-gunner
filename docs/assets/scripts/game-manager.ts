@@ -31,7 +31,7 @@ namespace BubbleGunner {
             this._stage.addChild(this._currentScene);
 
             this._currentScene.on(SceneBase.EventChangeScene, this.changeSceneHandler, this);
-            this._currentScene.start();
+            this._currentScene.start(sceneArgs);
         }
 
         private changeSceneHandler(evt: SceneEvent): void {

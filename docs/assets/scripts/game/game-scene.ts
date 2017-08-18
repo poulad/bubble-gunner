@@ -123,7 +123,7 @@ namespace BubbleGunner.Game {
                     this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Menu));
                     break;
                 case SceneType.GameOver:
-                    this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.GameOver));
+                    this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.GameOver, this._scoresBar.getScore()));
                     break;
                 default:
                     throw new Error(`Invalid scene type: ${toScene}`);
