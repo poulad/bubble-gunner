@@ -10,15 +10,17 @@ namespace BubbleGunner.Game {
         public static Radius: number = 46;
 
         private static Speed: number = 450;
-        private static AscendingSpeed: number = 100;
+        private static AscendingSpeed: number = 280;
 
         public startPoint: Point;
         public endPoint: Point;
         public speed: number;
         public containsAnimal: boolean = false;
+        public isPopping: boolean = false;
 
         private _animal: Animal;
         private _pulseCount = 0;
+        private _tickListener: Function;
 
         constructor(from: Point, to: Point) {
             super();
@@ -37,7 +39,7 @@ namespace BubbleGunner.Game {
         }
 
         public move(): Tween {
-            this.on(`tick`, this.handleTick, this);
+            this._tickListener = this.on(`tick`, this.handleTick, this);
 
             this.updateEndPoint();
 
@@ -52,12 +54,10 @@ namespace BubbleGunner.Game {
         public takeAnimal(animal: Animal): Tween {
             this._animal = animal;
             this.containsAnimal = true;
+            Tween.removeTweens(this._animal);
 
             this.x = this._animal.x;
             this.y = this._animal.y;
-
-            Tween.removeTweens(this);
-            Tween.removeTweens(this._animal);
 
             // make sure bubble is in full scale (for animals close to gun muzzle)
             this.scaleX = this.scaleY = 1;
@@ -65,7 +65,7 @@ namespace BubbleGunner.Game {
             this.startPoint = new Point(this.x, this.y);
             this.endPoint = new Point(this.x, -Animal.Radius);
 
-            return Tween.get(this)
+            return Tween.get(this, {override: true})
                 .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y
@@ -77,20 +77,20 @@ namespace BubbleGunner.Game {
             return this._animal;
         }
 
-        public pop(): Tween {
-            Tween.removeTweens(this);
+        public pop(): void {
+            this.isPopping = true;
+            this.off(`tick`, this._tickListener);
 
             if (this.containsAnimal) {
                 this._animal.continueFall();
+                delete this._animal;
+                this._animal = null;
+                this.containsAnimal = false;
             }
 
-            let tween = Tween.get(this)
-                .to({
-                    alpha: 0
-                }).call(this.dispatchEvent.bind(this, new Event(Bubble.EventPopped)));
-
+            this.alpha = 0;
             playSound(SoundAsset.BubblePop);
-            return tween;
+            this.dispatchEvent(new Event(Bubble.EventPopped));
         }
 
         private handleTick(): void {
@@ -103,6 +103,7 @@ namespace BubbleGunner.Game {
             }
 
             if (this.containsAnimal) {
+                this._animal.x = this.x;
                 this._animal.y = this.y;
             }
 
@@ -110,9 +111,7 @@ namespace BubbleGunner.Game {
         }
 
         private pulse(): void {
-            let newAlpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.6;
-            Tween.get(this).to({alpha: newAlpha});
-            this._pulseCount++;
+            this.alpha = Math.cos(this._pulseCount++ * 0.1) * 0.4 + 0.85;
         }
 
         private updateEndPoint(): void {

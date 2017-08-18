@@ -6,7 +6,7 @@ namespace BubbleGunner.Game {
     export class LavaPiece extends Bitmap {
         public static EventFell: string = `fell`;
         public static Radius: number = 30;
-        private static Speed: number = 400;
+        private static Speed: number = 470;
 
         public startPoint: Point;
         public endPoint: Point;

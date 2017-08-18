@@ -102,7 +102,7 @@ namespace BubbleGunner.Menu {
         private moveDragon(evt: any): void {
             if (evt && evt.name !== `cheer`) return;
 
-            console.debug(`Dragon running to other side`);
+            // console.debug(`Dragon running to other side`);
             const n = 9;
 
             let newX = this._dragon.scaleX > 0 ? 3 * NormalWidth / n : (n - 3) * NormalWidth / n;

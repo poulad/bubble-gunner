@@ -1,19 +1,19 @@
 {
   "name": "BubbleGunner",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "author": "Poulad",
   "scripts": {
     "compile": "tsc",
     "minify": "grunt",
     "build": "npm run compile && npm run minify",
-    "gen-audio": "cd docs/assets/sounds/ && audiosprite --output audiosprite --export 'ogg,mp3' --format createjs --bitrate 64 *.wma",
+    "gen-audio": "cd docs/assets/sounds/ ; audiosprite --output audiosprite --export 'ogg,mp3' --format createjs --bitrate 64 *.wma",
     "start": "node server.js",
-    "install": "typings install",
     "postinstall": "npm run build"
   },
   "devDependencies": {
-    "audiosprite": "^0.6.0",
+    "@types/createjs": "0.0.29",
+    "audiosprite": "^0.5.0",
     "express": "^4.15.4",
     "grunt": "^1.0.1",
     "grunt-contrib-clean": "^1.1.0",
@@ -21,8 +21,7 @@
     "grunt-contrib-uglify": "^3.0.1",
     "grunt-ts": "^6.0.0-beta.16",
     "serve-index": "^1.9.0",
-    "typescript": "^2.4.2",
-    "typings": "^2.1.1"
+    "typescript": "^2.4.2"
   },
   "dependencies": {
     "easeljs": "0.0.0",

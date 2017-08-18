@@ -29,6 +29,11 @@ namespace BubbleGunner.GameOver {
 
         public start(...args: any[]): void {
             this._pulseIntervalHandle = setInterval(this.pulse.bind(this), 60);
+
+            if (args.length === 1 && Telegram.Bot.Framework.gameScoreUrlExists()) {
+                const score = args[0][0][0] as number;
+                Telegram.Bot.Framework.sendUserScore(score);
+            }
         }
 
         private dispatchPlayGameEvent(): void {

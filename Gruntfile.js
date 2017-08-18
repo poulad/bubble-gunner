@@ -38,6 +38,12 @@ module.exports = function (grunt) {
                     "docs/assets/scripts/game/pterodactyl.js",
                     "docs/assets/scripts/game/game-scene.js",
 
+                    // Telegram.Bot.Framework
+                    "docs/assets/scripts/telegram-bot-framework/user.js",
+                    "docs/assets/scripts/telegram-bot-framework/game-high-score.js",
+                    "docs/assets/scripts/telegram-bot-framework/score-data.js",
+                    "docs/assets/scripts/telegram-bot-framework/helpers.js",
+
                     // Game Over scene
                     "docs/assets/scripts/game-over/game-over-scene.js",
 

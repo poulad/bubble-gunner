@@ -5,7 +5,6 @@
     "sourceMap": true
   },
   "include": [
-    "./typings/index.d.ts",
-    "./docs/assets/scripts/**/*.ts"
+    "docs/assets/scripts/**/*.ts"
   ]
 }

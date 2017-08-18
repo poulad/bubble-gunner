@@ -10,41 +10,41 @@
       {
         "id": "game-bubble-pop",
         "startTime": 104000,
-        "duration": 1857.5963718820817
+        "duration": 232.19954648526198
       },
       {
         "id": "game-bubble-shoot",
-        "startTime": 107000,
+        "startTime": 106000,
         "duration": 139.31972789116287
       },
       {
         "id": "game-lava-fall",
-        "startTime": 109000,
+        "startTime": 108000,
         "duration": 2182.675736961457
       },
       {
         "id": "game-lava-sea",
-        "startTime": 113000,
+        "startTime": 112000,
         "duration": 19272.562358276646
       },
       {
         "id": "game-pterodactyl",
-        "startTime": 134000,
+        "startTime": 133000,
         "duration": 743.0385487528213
       },
       {
         "id": "game-score",
-        "startTime": 136000,
+        "startTime": 135000,
         "duration": 1021.678004535147
       },
       {
         "id": "game-volcano",
-        "startTime": 139000,
+        "startTime": 138000,
         "duration": 2043.356009070294
       },
       {
         "id": "menu-button",
-        "startTime": 143000,
+        "startTime": 142000,
         "duration": 325.0793650793753
       }
     ]

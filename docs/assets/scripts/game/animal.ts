@@ -6,10 +6,11 @@ namespace BubbleGunner.Game {
     export class Animal extends Bitmap {
         public static EventFell: string = `fell`;
         public static Radius: number = 40;
-        public static Speed: number = 330;
+        public static Speed: number = 230;
 
         public startPoint: Point;
         public endPoint: Point;
+        public isDying = false;
 
         constructor(point: Point) {
             super(Animal.getRandomAnimalImage());
@@ -24,7 +25,7 @@ namespace BubbleGunner.Game {
         public moveTo(point: Point): Tween {
             this.endPoint = point;
 
-            return Tween.get(this)
+            return Tween.get(this, {override: true})
                 .to({
                     x: this.endPoint.x,
                     y: this.endPoint.y,
@@ -33,14 +34,14 @@ namespace BubbleGunner.Game {
         }
 
         public continueFall(): Tween {
-            Tween.removeTweens(this);
-            let newEndPoint = new Point(this.endPoint.x, NormalHeight);
-            return this.moveTo(newEndPoint);
+            this.startPoint = new Point(this.x, this.y);
+            return this.moveTo(new Point(this.startPoint.x, NormalHeight));
         }
 
         private fallCallback(): Tween {
-            return Tween.get(this)
-                .to({alpha: .3}, 300)
+            this.isDying = true;
+            return Tween.get(this, {override: true})
+                .to({alpha: 0}, 500)
                 .call(this.dispatchEvent.bind(this, Animal.EventFell));
         }
 
