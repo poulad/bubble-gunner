@@ -3,6 +3,8 @@ namespace BubbleGunner.Help {
     import Shape = createjs.Shape;
 
     export class HelpScene extends SceneBase {
+        private _gc: GarbageCollector = new GarbageCollector(this);
+
         constructor() {
             super();
 
@@ -15,7 +17,7 @@ namespace BubbleGunner.Help {
             let back = new Bitmap(loader.getResult(`back`));
             back.x = 30;
             back.y = 30;
-            back.on(`click`, this.dispatchBackToMenuEvent, this);
+            this._gc.registerEventListener(back, `click`, this.dispatchBackToMenuEvent, this);
             back.cursor = `pointer`;
             back.scaleX = back.scaleY = 1.5;
             this.addChild(back);

@@ -6,10 +6,11 @@ namespace BubbleGunner.Menu {
     import Sound = createjs.Sound;
 
     export class PreloadScene extends SceneBase {
+        private static Radius: number = 50;
+
         private _circle: Shape;
         private _text: Text;
-
-        private static Radius: number = 50;
+        private _gc: GarbageCollector = new GarbageCollector(this);
 
         constructor() {
             super();
@@ -33,8 +34,8 @@ namespace BubbleGunner.Menu {
             loader = new LoadQueue(true, `assets/`);
             loader.installPlugin(createjs.Sound);
             Sound.alternateExtensions = ["mp3"];
-            loader.on(`progress`, this.updateProgress, this);
-            loader.on(`complete`, this.changeToMenuScene, this);
+            this._gc.registerEventListener(loader, `progress`, this.updateProgress, this);
+            this._gc.registerEventListener(loader, `complete`, this.changeToMenuScene, this);
 
             loader.loadManifest([
                 // Audiosprite
@@ -65,7 +66,7 @@ namespace BubbleGunner.Menu {
                 {id: `game-animal1`, src: `images/animal1.png`},
                 {id: `game-animal2`, src: `images/animal2.png`},
                 {id: `game-animal3`, src: `images/animal3.png`},
-                {id: `game-pterodactyl`, src: `images/pterodactyl.png`},
+                // {id: `game-pterodactyl`, src: `images/pterodactyl.png`},
             ]);
         }
 
@@ -73,7 +74,7 @@ namespace BubbleGunner.Menu {
             let percent = Math.floor(evt.loaded * 100);
             let scaleFactor = (this._circle.scaleX + (percent * 10)) / 100;
 
-            const tween: Tween = Tween.get(this._circle)
+            Tween.get(this._circle)
                 .to({
                     scaleX: scaleFactor,
                     scaleY: scaleFactor,
@@ -88,7 +89,7 @@ namespace BubbleGunner.Menu {
             Tween.removeTweens(this._circle);
             Tween.get(this._circle)
                 .to({scaleX: 10, scaleY: 10}, 200)
-                .call(() => setTimeout(() =>
+                .call(() => this._gc.registerTimeout(() =>
                     this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Menu)), 400)
                 );
         }

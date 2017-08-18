@@ -12,6 +12,7 @@ namespace BubbleGunner.Menu {
         private _btnStartGame2: Container;
         private _btnHelp: Bitmap;
         private _dragon: Sprite;
+        private _gc: GarbageCollector = new GarbageCollector(this);
 
         constructor() {
             super();
@@ -30,9 +31,9 @@ namespace BubbleGunner.Menu {
             this._btnStartGame.x = NormalWidth / 2;
             this._btnStartGame.y = NormalHeight / 2;
             this._btnStartGame.cursor = `pointer`;
-            this._btnStartGame.on(`click`, this.onStartButtonClick, this);
+            this._gc.registerEventListener(this._btnStartGame, `click`, this.onStartButtonClick, this);
             this.addChild(this._btnStartGame);
-            setInterval(this.pulse.bind(this), 120);
+            this._gc.registerInterval(this.pulse.bind(this), 120);
 
             // this.createStartGameButton(); // ToDo
 
@@ -40,7 +41,7 @@ namespace BubbleGunner.Menu {
             this._btnHelp.x = NormalWidth - this._btnHelp.image.width - 50;
             this._btnHelp.y = 50;
             this._btnHelp.cursor = "pointer";
-            this._btnHelp.on("click", this.onHelpButtonClick, this);
+            this._gc.registerEventListener(this._btnHelp, "click", this.onHelpButtonClick, this);
             this.addChild(this._btnHelp);
 
             let data = {
@@ -75,7 +76,7 @@ namespace BubbleGunner.Menu {
         }
 
         public start(...args: any[]): void {
-            this._dragon.on(`animationend`, this.moveDragon, this);
+            this._gc.registerEventListener(this._dragon, `animationend`, this.moveDragon, this);
             this._dragon.gotoAndPlay(`run`);
 
             this.moveDragon(undefined);
@@ -148,7 +149,7 @@ namespace BubbleGunner.Menu {
             this._btnStartGame2.x = NormalWidth / 2;
             this._btnStartGame2.y = NormalHeight / 2;
             this._btnStartGame2.cursor = `pointer`;
-            this._btnStartGame2.on(`click`, this.onStartButtonClick, this);
+            this._gc.registerEventListener(this._btnStartGame2, `click`, this.onStartButtonClick, this);
             this.addChild(this._btnStartGame2);
         }
     }

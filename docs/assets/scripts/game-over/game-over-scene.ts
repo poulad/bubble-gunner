@@ -7,6 +7,7 @@ namespace BubbleGunner.GameOver {
         private _refreshButton: Bitmap;
         private _pulseIntervalHandle: number;
         private _pulseCount: number = 0;
+        private _gc: GarbageCollector = new GarbageCollector(this);
 
         constructor() {
             super();
@@ -22,13 +23,13 @@ namespace BubbleGunner.GameOver {
             this._refreshButton.regY = this._refreshButton.getBounds().height / 2;
             this._refreshButton.x = NormalWidth / 2;
             this._refreshButton.y = NormalHeight / 2;
-            this._refreshButton.on(`click`, this.dispatchPlayGameEvent, this);
+            this._gc.registerEventListener(this._refreshButton, `click`, this.dispatchPlayGameEvent, this);
             this._refreshButton.cursor = `pointer`;
             this.addChild(this._refreshButton);
         }
 
         public start(...args: any[]): void {
-            this._pulseIntervalHandle = setInterval(this.pulse.bind(this), 60);
+            this._pulseIntervalHandle = this._gc.registerInterval(this.pulse.bind(this), 60);
 
             if (args.length === 1 && Telegram.Bot.Framework.gameScoreUrlExists()) {
                 const score = args[0][0][0] as number;
@@ -38,7 +39,7 @@ namespace BubbleGunner.GameOver {
 
         private dispatchPlayGameEvent(): void {
             playSound(SoundAsset.ButtonClick);
-            clearInterval(this._pulseIntervalHandle);
+            this._gc.disposeInterval(this._pulseIntervalHandle);
             this.dispatchEvent(new SceneEvent(SceneBase.EventChangeScene, SceneType.Game));
         }
 
