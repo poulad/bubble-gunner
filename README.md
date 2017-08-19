@@ -1,8 +1,10 @@
 # Bubble Gunner
 
-_A CreateJS game_
+[![logo](docs/assets/images/logo.png)](https://pouladpld.github.io/bubble-gunner)
 
 Join the journey of bubble gunner to save lavaland animals. Shoot bubbles and catch animals but be careful! Pieces of lava are also falling down. 
+
+**Play it now in [browser](https://pouladpld.github.io/bubble-gunner) or in a [Telegram chat](https://t.me/JoPoKyBot?game=bubblegunner)**!
 
 ## Getting Started
 
