@@ -30,19 +30,12 @@ namespace BubbleGunner.Game {
                     x: this.endPoint.x,
                     y: this.endPoint.y,
                 }, getTweenDurationMSecs(this.startPoint, this.endPoint, Animal.Speed))
-                .call(this.fallCallback.bind(this));
-        }
-
-        public continueFall(): Tween {
-            this.startPoint = new Point(this.x, this.y);
-            return this.moveTo(new Point(this.startPoint.x, NormalHeight));
-        }
-
-        private fallCallback(): Tween {
-            this.isDying = true;
-            return Tween.get(this, {override: true})
-                .to({alpha: 0}, 500)
                 .call(this.dispatchEvent.bind(this, Animal.EventFell));
+        }
+
+        public fall(): Tween {
+            this.startPoint = new Point(this.x, this.y);
+            return this.moveTo(new Point(this.startPoint.x, NormalHeight + Animal.Radius));
         }
 
         private static getRandomAnimalImage(): Object {

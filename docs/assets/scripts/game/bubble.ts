@@ -82,7 +82,7 @@ namespace BubbleGunner.Game {
             this.off(`tick`, this._tickListener);
 
             if (this.containsAnimal) {
-                this._animal.continueFall();
+                this._animal.fall();
                 delete this._animal;
                 this._animal = null;
                 this.containsAnimal = false;

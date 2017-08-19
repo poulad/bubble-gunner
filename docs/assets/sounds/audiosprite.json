@@ -3,48 +3,53 @@
   "data": {
     "audioSprite": [
       {
-        "id": "game-bgm",
+        "id": "game-animal-die",
         "startTime": 0,
+        "duration": 371.51927437641723
+      },
+      {
+        "id": "game-bgm",
+        "startTime": 2000,
         "duration": 102121.36054421769
       },
       {
         "id": "game-bubble-pop",
-        "startTime": 104000,
+        "startTime": 106000,
         "duration": 232.19954648526198
       },
       {
         "id": "game-bubble-shoot",
-        "startTime": 106000,
+        "startTime": 108000,
         "duration": 139.31972789116287
       },
       {
         "id": "game-lava-fall",
-        "startTime": 108000,
+        "startTime": 110000,
         "duration": 2182.675736961457
       },
       {
         "id": "game-lava-sea",
-        "startTime": 112000,
+        "startTime": 114000,
         "duration": 19272.562358276646
       },
       {
         "id": "game-pterodactyl",
-        "startTime": 133000,
+        "startTime": 135000,
         "duration": 743.0385487528213
       },
       {
         "id": "game-score",
-        "startTime": 135000,
+        "startTime": 137000,
         "duration": 1021.678004535147
       },
       {
         "id": "game-volcano",
-        "startTime": 138000,
+        "startTime": 140000,
         "duration": 2043.356009070294
       },
       {
         "id": "menu-button",
-        "startTime": 142000,
+        "startTime": 144000,
         "duration": 325.0793650793753
       }
     ]

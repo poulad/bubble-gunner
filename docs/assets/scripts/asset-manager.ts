@@ -16,6 +16,7 @@ namespace BubbleGunner {
         BubblePop,
         Volcano,
         Score,
+        AnimalDie,
     }
 
     const soundMappings: [SoundAsset, string][] = [
@@ -27,6 +28,7 @@ namespace BubbleGunner {
         [SoundAsset.BubbleShoot, `game-bubble-shoot`],
         [SoundAsset.BubblePop, `game-bubble-pop`],
         [SoundAsset.Score, `game-score`],
+        [SoundAsset.AnimalDie, `game-animal-die`],
     ];
 
     export function getImage(id: ImageAsset): Object {

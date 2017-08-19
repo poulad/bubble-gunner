@@ -196,6 +196,7 @@ namespace BubbleGunner.Game {
 
         private handleAnimalFall(evt: Event) {
             let animal: Animal = evt.target as Animal;
+            playSound(SoundAsset.AnimalDie);
             this._scoresBar.decreaseRemainingLives();
             this.removeShape(animal);
         }
