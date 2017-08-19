@@ -5,18 +5,20 @@ namespace BubbleGunner.GameOver {
 
     export class GameOverScene extends SceneBase {
         private _refreshButton: Bitmap;
+        private _gameOverText: Text;
         private _pulseIntervalHandle: number;
         private _pulseCount: number = 0;
+        private _score: number;
         private _gc: GarbageCollector = new GarbageCollector(this);
 
         constructor() {
             super();
 
-            let text = new Text(`GAME OVER`, `80px Permanent Marker`, `#F57`);
-            const textSize = text.getBounds();
-            text.x = NormalWidth / 2 - textSize.width / 2;
-            text.y = 30;
-            this.addChild(text);
+            this._gameOverText = new Text(`GAME OVER`, `80px Permanent Marker`, `#F57`);
+            const textSize = this._gameOverText.getBounds();
+            this._gameOverText.x = NormalWidth / 2 - textSize.width / 2;
+            this._gameOverText.y = 30;
+            this.addChild(this._gameOverText);
 
             this._refreshButton = new Bitmap(loader.getResult(`refresh`));
             this._refreshButton.regX = this._refreshButton.getBounds().width / 2;
@@ -30,11 +32,21 @@ namespace BubbleGunner.GameOver {
 
         public start(...args: any[]): void {
             this._pulseIntervalHandle = this._gc.registerInterval(this.pulse.bind(this), 60);
+            this._score = args[0][0][0] as number;
 
-            if (args.length === 1 && Telegram.Bot.Framework.gameScoreUrlExists()) {
-                const score = args[0][0][0] as number;
-                Telegram.Bot.Framework.sendUserScore(score);
+            if (Telegram.Bot.Framework.gameScoreUrlExists()) {
+                Telegram.Bot.Framework.sendUserScore(this._score);
             }
+
+            this.drawScore();
+        }
+
+        private drawScore(): void {
+            const scoreText = new Text(`You Scored: ${this._score}`, `50px Permanent Marker`, `#FEA`);
+            const textSize = scoreText.getBounds();
+            scoreText.x = NormalWidth / 2 - textSize.width / 2;
+            scoreText.y = this._gameOverText.y + this._gameOverText.getMeasuredHeight() + 20;
+            this.addChild(scoreText);
         }
 
         private dispatchPlayGameEvent(): void {
